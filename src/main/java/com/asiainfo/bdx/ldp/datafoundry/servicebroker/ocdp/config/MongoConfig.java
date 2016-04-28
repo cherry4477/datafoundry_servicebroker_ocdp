@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import com.mongodb.MongoClient;
 
 @Configuration
-@EnableMongoRepositories(basePackages = "org.springframework.cloud.servicebroker.mongodb.repository")
+@EnableMongoRepositories(basePackages = "com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository")
 public class MongoConfig {
 
 	@Value("${mongodb.host:localhost}")
