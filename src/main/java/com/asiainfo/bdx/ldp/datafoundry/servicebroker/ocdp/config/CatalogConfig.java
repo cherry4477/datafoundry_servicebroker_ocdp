@@ -19,17 +19,17 @@ public class CatalogConfig {
 	public Catalog catalog() {
 		return new Catalog(Collections.singletonList(
 				new ServiceDefinition(
-						"mongodb-service-broker",
-						"Mongo DB",
-						"A simple MongoDB service broker implementation",
+						"datafoundry-ocdp-service-broker",
+						"OCDP",
+						"A OCDP Hadoop service broker implementation",
 						true,
 						false,
 						Collections.singletonList(
-								new Plan("mongo-plan",
-										"Default Mongo Plan",
-										"This is a default mongo plan.  All services are created equally.",
+								new Plan("ocdp-plan",
+										"Default ocdp Plan",
+										"This is a default ocdp plan.  All services are created equally.",
 										getPlanMetadata())),
-						Arrays.asList("mongodb", "document"),
+						Arrays.asList("ocdp", "document"),
 						getServiceDefinitionMetadata(),
 						null,
 						null)));
@@ -39,12 +39,12 @@ public class CatalogConfig {
 
 	private Map<String, Object> getServiceDefinitionMetadata() {
 		Map<String, Object> sdMetadata = new HashMap<>();
-		sdMetadata.put("displayName", "MongoDB");
-		sdMetadata.put("imageUrl", "http://info.mongodb.com/rs/mongodb/images/MongoDB_Logo_Full.png");
-		sdMetadata.put("longDescription", "MongoDB Service");
-		sdMetadata.put("providerDisplayName", "Pivotal");
-		sdMetadata.put("documentationUrl", "https://github.com/spring-cloud-samples/cloudfoundry-mongodb-service-broker");
-		sdMetadata.put("supportUrl", "https://github.com/spring-cloud-samples/cloudfoundry-mongodb-service-broker");
+		sdMetadata.put("displayName", "OCDP");
+		sdMetadata.put("imageUrl", "http://...");
+		sdMetadata.put("longDescription", "OCDP Service");
+		sdMetadata.put("providerDisplayName", "AsiaInfo");
+		sdMetadata.put("documentationUrl", "https://github.com/baikai/datafoundry_servicebroker_ocdp");
+		sdMetadata.put("supportUrl", "https://github.com/baikai/datafoundry_servicebroker_ocdp");
 		return sdMetadata;
 	}
 	
@@ -68,9 +68,9 @@ public class CatalogConfig {
 	}
 	
 	private List<String> getBullets() {
-		return Arrays.asList("Shared MongoDB server", 
-				"100 MB Storage (not enforced)", 
-				"40 concurrent connections (not enforced)");
+		return Arrays.asList("Shared OCDP server",
+				"20 GB Storage (not enforced)",
+				"10 concurrent connections (not enforced)");
 	}
 	
 }

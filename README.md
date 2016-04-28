@@ -7,7 +7,7 @@ This project uses the Spring Cloud - Cloud Foundry Service Broker to implement O
 
 ## Getting Started
 
-You need to install and run MongoDB somewhere and configure connectivity in [application.yml](src/main/resources/application.yml).
+You need to install and run OCDP cluster somewhere and configure connectivity in [application.yml](src/main/resources/application.yml).
 
 Build it:
 

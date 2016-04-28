@@ -1,14 +1,19 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstanceBinding;
-import org.springframework.data.mongodb.repository.MongoRepository;
 
 /**
  * Repository for ServiceInstanceBinding objects
  * 
- * @author sgreenberg@pivotal.io
+ * @author whitebai1986@gmail.com
  *
  */
-public interface MongoServiceInstanceBindingRepository extends MongoRepository<ServiceInstanceBinding, String> {
+public interface OCDPServiceInstanceBindingRepository {
+
+    ServiceInstanceBinding findOne(String bindingId);
+
+    void save(ServiceInstanceBinding binding);
+
+    void delete(String bindingId);
 
 }

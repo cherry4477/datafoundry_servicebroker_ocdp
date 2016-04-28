@@ -6,7 +6,7 @@ import java.util.Map;
 /**
  * A binding to a service instance
  *
- * @author sgreenberg@pivotal.io
+ * @author whitebai1986@gmail.com
  */
 public class ServiceInstanceBinding {
 
