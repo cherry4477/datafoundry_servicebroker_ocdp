@@ -18,8 +18,8 @@ ext {
     version =  '0.1.0.BUILD-SNAPSHOT'
 }
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -27,9 +27,14 @@ repositories {
 }
 
 dependencies {
+    compile("org.springframework.ldap:spring-ldap-core:2.0.4.RELEASE")
     compile("org.springframework.cloud:spring-cloud-cloudfoundry-service-broker:${springCloudFoundryServiceBrokerVersion}")
     testCompile(group: "org.springframework.cloud", name: "spring-cloud-cloudfoundry-service-broker", version: "${springCloudFoundryServiceBrokerVersion}", classifier: "tests")
     testCompile("org.springframework.boot:spring-boot-starter-test")
+    compile files('libs/etcd-client-0.1-SNAPSHOT.jar')
+    compile('org.apache.httpcomponents:httpasyncclient:4.0-beta4')
+    compile('com.google.guava:guava:14.0.1')
+    compile('com.google.code.gson:gson:2.2.4')
 }
 
 jar {

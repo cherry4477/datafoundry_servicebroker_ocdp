@@ -1,3 +1,3 @@
 ocdp:
-  host: localhost
-  port: 27017
+  etcd:
+     endpoint: http://103.235.243.145:2379
