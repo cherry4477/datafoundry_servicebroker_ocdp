@@ -1,3 +1,14 @@
 ocdp:
   etcd:
      endpoint: http://103.235.243.145:2379
+  ldap:
+      url: ldap://103.235.242.211
+      userDN: cn=root,dc=asiainfo,dc=com
+      password: 00AAaa00
+      base: dc=asiainfo,dc=com
+  krb:
+      kdcHost: ochadoop06.jcloud.local
+      user-principal: admin/admin@ASIAINFO.COM
+      keytab-location: /tmp/admin.keytab
+      adminPwd: 00AAaa00
+      realm: ASIAINFO.COM
