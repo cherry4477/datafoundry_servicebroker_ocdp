@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
+import java.util.ArrayList;
 import java.util.UUID;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
@@ -21,7 +22,10 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPService
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.rangerConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
 
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
@@ -29,7 +33,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
 import org.springframework.ldap.query.LdapQuery;
 import org.springframework.ldap.support.LdapNameBuilder;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
@@ -59,6 +62,9 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     @Autowired
     public krbConfig krbConfig;
 
+    @Autowired
+    public rangerConfig rangerConfig;
+
 	@Autowired
 	public OCDPServiceInstanceService(OCDPAdminService ocdp, OCDPServiceInstanceRepository repository) {
 		this.ocdp = ocdp;
@@ -69,9 +75,11 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 	public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
 		// TODO OCDP service instance create
         System.out.println("Provison service instance.");
+        /**
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         //LdapQuery query = query().base("ou=People");
         //List<String> list = ldap.list(query.base());
+
         String accountName = "servIns_" + UUID.randomUUID().toString();
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
@@ -96,6 +104,21 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }catch(KerberosOperationException e){
             e.printStackTrace();
         }
+         **/
+        rangerClient rc = rangerConfig.getRangerClient();
+        //System.out.println(rc.getPolicy("1"));
+        ArrayList<String> groupList = new ArrayList<String>(){{
+            add("public");
+        }};
+        ArrayList<String> userList = new ArrayList<String>(){{
+            add("hdfs");
+        }};
+        ArrayList<String> permList = new ArrayList<String>(){{
+            add("read");
+        }};
+        //System.out.println(rc.getPolicy("1"));
+        rc.createPolicy("testpolicy", "/user/test", "desc",
+                "OCDP_hadoop", "hdfs", groupList, userList, permList);
 		return new CreateServiceInstanceResponse();
 	}
 
@@ -112,6 +135,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 	public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) throws OCDPServiceException {
 		// TODO OCDP service instance delete
         System.out.println("Deprovison service instance.");
+        /**
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
@@ -124,6 +148,9 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }catch (KerberosOperationException e){
             e.printStackTrace();
         }
+         **/
+        rangerClient rc = rangerConfig.getRangerClient();
+        System.out.println(rc.removePolicy("24"));
 		return new DeleteServiceInstanceResponse();
 	}
 

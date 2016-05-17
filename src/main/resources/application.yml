@@ -12,3 +12,7 @@ ocdp:
       keytab-location: /tmp/admin.keytab
       adminPwd: 00AAaa00
       realm: ASIAINFO.COM
+  ranger:
+      rangerUri: http://ocdpbroker.jcloud.local:6080
+      rangerUser: admin
+      rangerPwd: admin
