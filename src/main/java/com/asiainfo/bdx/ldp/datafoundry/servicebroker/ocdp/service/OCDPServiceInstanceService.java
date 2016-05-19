@@ -1,5 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.UUID;
 import javax.naming.directory.Attributes;
@@ -7,8 +9,6 @@ import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.ShellCommandUtil;
-import org.apache.directory.server.kerberos.shared.keytab.Keytab;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest;
@@ -18,24 +18,22 @@ import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResp
 import org.springframework.cloud.servicebroker.model.OperationState;
 import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.rangerConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.ldap.query.LdapQuery;
 import org.springframework.ldap.support.LdapNameBuilder;
-import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
 /**
  * OCDP impl to manage hadoop service instances.  Creating a service does the following:
@@ -49,8 +47,7 @@ import static org.springframework.ldap.query.LdapQueryBuilder.query;
 @Service
 public class OCDPServiceInstanceService implements ServiceInstanceService {
 
-	private OCDPAdminService ocdp;
-	
+    @Autowired
 	private OCDPServiceInstanceRepository repository;
 
     @Autowired
@@ -62,63 +59,36 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     @Autowired
     public krbConfig krbConfig;
 
-    @Autowired
-    public rangerConfig rangerConfig;
+    public OCDPServiceInstanceService() {}
 
-	@Autowired
-	public OCDPServiceInstanceService(OCDPAdminService ocdp, OCDPServiceInstanceRepository repository) {
-		this.ocdp = ocdp;
-		this.repository = repository;
-	}
-	
+    private OCDPAdminService getOCDPAdminService(String serviceID){
+        return  (OCDPAdminService) this.context.getBean(
+                OCDPAdminServiceMapper.getOCDPAdminService(serviceID)
+        );
+    }
+
 	@Override
 	public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) {
-		// TODO OCDP service instance create
-        System.out.println("Provison service instance.");
-        /**
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
-        //LdapQuery query = query().base("ou=People");
-        //List<String> list = ldap.list(query.base());
-
-        String accountName = "servIns_" + UUID.randomUUID().toString();
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", accountName)
-                .build();
-        Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("sn", accountName);
-        BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("top");
-        classAttribute.add("person");
-        userAttributes.put(classAttribute);
-        ldap.bind(ldapName, null, userAttributes);
-        krbClient kc = new krbClient(this.krbConfig);
-        try{
-            String pn = accountName +  "/admin@ASIAINFO.COM";
-            kc.createPrincipal(pn, "111111");
-            ShellCommandUtil.Result re = kc.invokeKAdmin("listprincs");
-            System.out.println(re.getStdout());
-            Keytab kt = kc.createKeyTab(pn, "111111", null);
-            System.out.println(kt);
-            kc.createKetTabFile(kt, "/tmp/test.keytab");
-        }catch(KerberosOperationException e){
-            e.printStackTrace();
+        String serviceId = request.getServiceDefinitionId();
+        ServiceInstance instance = repository.findOne(request.getServiceInstanceId());
+        if (instance != null) {
+            throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
         }
-         **/
-        rangerClient rc = rangerConfig.getRangerClient();
-        //System.out.println(rc.getPolicy("1"));
-        ArrayList<String> groupList = new ArrayList<String>(){{
-            add("public");
-        }};
-        ArrayList<String> userList = new ArrayList<String>(){{
-            add("hdfs");
-        }};
-        ArrayList<String> permList = new ArrayList<String>(){{
-            add("read");
-        }};
-        //System.out.println(rc.getPolicy("1"));
-        rc.createPolicy("testpolicy", "/user/test", "desc",
-                "OCDP_hadoop", "hdfs", groupList, userList, permList);
+        instance = new ServiceInstance(request);
+
+        OCDPAdminService ocdp = getOCDPAdminService(serviceId);
+
+        // TODO Create LDAP user for service instance
+        System.out.println("create ldap user.");
+        // TODO Create Kerberos principal for new LDAP user
+        System.out.println("create kerberos principal.");
+        // TODO Create Hadoop resource like hdfs folder, hbase table ...
+        ocdp.provisionResources();
+        // TODO Set permission by Apache Ranger
+        ocdp.assignPermissionToResources();
+
+        repository.save(instance);
+
 		return new CreateServiceInstanceResponse();
 	}
 
@@ -133,24 +103,25 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
 	@Override
 	public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request) throws OCDPServiceException {
-		// TODO OCDP service instance delete
-        System.out.println("Deprovison service instance.");
-        /**
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", "servIns_499bb289-0c3d-4de6-9ad9-9fa0617f0e85")
-                .build();
-        ldap.unbind(ldapName);
-        krbClient kc = new krbClient(this.krbConfig);
-        try{
-            kc.removePrincipal("baikai/admin@ASIAINFO.COM");
-        }catch (KerberosOperationException e){
-            e.printStackTrace();
+        String serviceId = request.getServiceDefinitionId();
+        String instanceId = request.getServiceInstanceId();
+        ServiceInstance instance = repository.findOne(instanceId);
+        if (instance == null) {
+            throw new ServiceInstanceDoesNotExistException(instanceId);
         }
-         **/
-        rangerClient rc = rangerConfig.getRangerClient();
-        System.out.println(rc.removePolicy("24"));
+
+        OCDPAdminService ocdp = getOCDPAdminService(serviceId);
+        // TODO Delete LDAP user for service instance
+        System.out.println("Delete ldap user.");
+        // TODO Delete Kerberos principal for new LDAP user
+        System.out.println("Delete kerberos principal.");
+        // TODO Delete Hadoop resource like hdfs folder, hbase table ...
+        ocdp.deprovisionResources();
+        // TODO Unset permission by Apache Ranger
+        ocdp.unassignPermissionFromResources();
+
+        repository.delete(instanceId);
+
 		return new DeleteServiceInstanceResponse();
 	}
 

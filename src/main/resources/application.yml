@@ -2,7 +2,7 @@ ocdp:
   etcd:
      endpoint: http://103.235.243.145:2379
   ldap:
-      url: ldap://103.235.242.211
+      url: ldap://ochadoop06.jcloud.local
       userDN: cn=root,dc=asiainfo,dc=com
       password: 00AAaa00
       base: dc=asiainfo,dc=com
@@ -16,3 +16,10 @@ ocdp:
       rangerUri: http://ocdpbroker.jcloud.local:6080
       rangerUser: admin
       rangerPwd: admin
+  hdfs:
+      hdfsSuperUser: hdfs-OCDP@ASIAINFO.COM
+      userKeytab: /Users/baikai/Work/Dev/AsiaInfo/hadoopConf/hdfs.keytab
+      krbFilePath: /Users/baikai/Work/Dev/AsiaInfo/hadoopConf/krb5.conf
+      hdfsURL: hdfs://ocdpbroker.jcloud.local
+
+
