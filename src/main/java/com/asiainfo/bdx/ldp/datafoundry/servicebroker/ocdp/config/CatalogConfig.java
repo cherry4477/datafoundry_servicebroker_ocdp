@@ -31,10 +31,8 @@ public class CatalogConfig {
     private List<ServiceDefinition> getServiceDefinitions() {
         ArrayList<ServiceDefinition> serviceDefinitions = new ArrayList<ServiceDefinition>();
         etcdClient etcdClient = etcdCfg.getEtcdClient();
-        EtcdResult result = etcdClient.read("/servicebroker/ocdp/catalog");
-        if (result.node != null) {
-            Map<String, Object> sdMetadata = new HashMap<>();
-            String catalogString = result.node.value;
+        String catalogString = etcdClient.readToString("/servicebroker/ocdp/catalog");
+        if (catalogString != null) {
             Catalog catalogObj = gson.fromJson(catalogString, Catalog.class);
             serviceDefinitions.addAll(catalogObj.getServiceDefinitions());
         }

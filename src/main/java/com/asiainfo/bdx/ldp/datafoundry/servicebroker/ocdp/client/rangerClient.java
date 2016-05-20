@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
+import java.io.InputStream;
 import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -81,7 +82,7 @@ public class rangerClient {
         return rp;
     }
 
-    public boolean createPolicy(String policyName, String resourceName, String description,
+    public String createPolicy(String policyName, String resourceName, String description,
                              String repositoryName, String repositoryType, List<String> groupList,
                              List<String> userList, List<String> permList){
         boolean status = false;
@@ -100,7 +101,7 @@ public class rangerClient {
         }catch (IOException e){
             e.printStackTrace();
         }
-        return status;
+        return (status ? policyName : null);
     }
 
     public boolean removePolicy(String policyID){

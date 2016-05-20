@@ -17,20 +17,20 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
 
     @Override
     public ServiceInstanceBinding findOne(String bindingId) {
-        System.err.println("find one： MysqlServiceInstanceBinding");
+        System.err.println("find one： OCDPServiceInstanceBinding");
         return null;
     }
 
     @Override
     public void save(ServiceInstanceBinding binding) {
-        System.err.println("save：MysqlServiceInstanceBinding");
+        System.err.println("save：OCDPServiceInstanceBinding");
         // TODO Auto-generated method stub
 
     }
 
     @Override
     public void delete(String bindingId) {
-        System.err.println("delete:MysqlServiceInstanceBinding");
+        System.err.println("delete:OCDPServiceInstanceBinding");
         // TODO Auto-generated method stub
 
     }

@@ -30,11 +30,26 @@ public class etcdClient {
         return result;
     }
 
+    public String readToString(String key){
+        EtcdResult result = this.read(key);
+        return (result.node != null) ? result.node.value : null;
+    }
+
     public EtcdResult write(String key, String value){
         EtcdResult result = new EtcdResult();
         try{
             result = this.etcdclient.set(key, value);
         }catch(EtcdClientException e){
+            e.printStackTrace();
+        }
+        return result;
+    }
+
+    public EtcdResult createDir(String key) {
+        EtcdResult result = new EtcdResult();
+        try {
+            result = this.etcdclient.createDirectory(key);
+        } catch (EtcdClientException e) {
             e.printStackTrace();
         }
         return result;
@@ -49,4 +64,15 @@ public class etcdClient {
         }
         return result;
     }
+
+    public EtcdResult deleteDir(String key){
+        EtcdResult result = new EtcdResult();
+        try {
+            result = this.etcdclient.deleteDirectory(key);
+        } catch (EtcdClientException e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
+
 }

@@ -1,5 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -38,6 +40,10 @@ public class ServiceInstance {
 	@JsonSerialize
 	@JsonProperty("dashboard_url")
 	private String dashboardUrl;
+
+	@JsonSerialize
+    @JsonProperty("ServiceInstanceMetadata")
+    private Map<String, String> ServiceInstanceMetadata;
 
 	@SuppressWarnings("unused")
 	private ServiceInstance() {}
@@ -112,6 +118,12 @@ public class ServiceInstance {
 	public String getDashboardUrl() {
 		return dashboardUrl;
 	}
+
+    public Map<String, String> getServiceInstanceMetadata() { return ServiceInstanceMetadata; }
+
+    public void setServiceInstanceMetadata(Map<String, String> ServiceInstanceMetadata) {
+        this.ServiceInstanceMetadata = ServiceInstanceMetadata;
+    }
 
 	public ServiceInstance and() {
 		return this;
