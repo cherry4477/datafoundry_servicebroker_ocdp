@@ -10,10 +10,10 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance
  */
 public interface OCDPServiceInstanceBindingRepository {
 
-    ServiceInstanceBinding findOne(String bindingId);
+    ServiceInstanceBinding findOne(String serviceInstanceId, String bindingId);
 
     void save(ServiceInstanceBinding binding);
 
-    void delete(String bindingId);
+    void delete(String serviceInstanceId, String bindingId);
 
 }

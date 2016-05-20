@@ -2,9 +2,6 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.impl;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.EtcdConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.justinsb.etcd.EtcdResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +21,6 @@ import java.util.Map;
 public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRepository {
 
     private etcdClient etcdClient;
-    static final Gson gson = new GsonBuilder().create();
 
     @Autowired
     public OCDPServiceInstanceRepositoryImpl(EtcdConfig etcdCfg){
@@ -49,7 +45,7 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
         String serviceInstanceResource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/metadata/serviceInstanceResource");
         String rangerPolicyName = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
-                "/dashboardUrl");
+                "/metadata/rangerPolicyName");
         Map<String, String> serviceInstanceMatadata = new HashMap<String, String>() {
             {
                 put("serviceInstanceUser", serviceInstanceUser);

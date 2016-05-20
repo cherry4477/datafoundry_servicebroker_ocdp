@@ -1,8 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.util.Map;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
@@ -17,7 +15,6 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindin
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
-import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingExistsException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingDoesNotExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -48,7 +45,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
     private ApplicationContext context;
 
     @Autowired
-    private com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig ldapConfig;
+    private ldapConfig ldapConfig;
 
     @Autowired
     public krbConfig krbConfig;
@@ -66,13 +63,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceId = request.getServiceDefinitionId();
 		String bindingId = request.getBindingId();
 		String serviceInstanceId = request.getServiceInstanceId();
-        ServiceInstanceBinding binding = bindingRepository.findOne(bindingId);
+        ServiceInstanceBinding binding = bindingRepository.findOne(serviceId, bindingId);
         if (binding != null) {
-            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
+           // throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
 
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
-        // TODO Create LDAP user for OCDP service instance binding
+        // Create LDAP user for OCDP service instance binding
         System.out.println("create service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
@@ -91,25 +88,37 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Create kerberos principal for OCDP service instance binding
         System.out.println("create service binding kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
+        String pn = accountName +  "@ASIAINFO.COM";
+        String pwd = UUID.randomUUID().toString();
         try{
-            String pn = accountName +  "@ASIAINFO.COM";
-            String pwd = UUID.randomUUID().toString();
             kc.createPrincipal(pn, pwd);
             //Keytab kt = kc.createKeyTab(pn, pwd, null);
         }catch(KerberosOperationException e){
             e.printStackTrace();
         }
-        // TODO Create Hadoop resource like hdfs folder, hbase table ...
-        ocdp.provisionResources(serviceId);
-        // TODO Set permission by Apache Ranger
-        //ocdp.assignPermissionToResources();
-        //TODO generate binding credentials
-        Map<String, Object> credentials = ocdp.generateCredentials();
+        // Create Hadoop resource like hdfs folder, hbase table ...
+        String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId);
+        // Set permission by Apache Ranger
+        ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
+        ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
+        ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
+        String policyName = UUID.randomUUID().toString();
+        String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
+                groupList, userList, permList);
 
+        // generate binding credentials
+        Map<String, String> credentials = new HashMap<String, String>() {
+            {
+                put("serviceInstanceUser", accountName);
+                put("serviceInstancePwd", pwd);
+                put("serviceInstanceResource", serviceInstanceResource);
+                put("rangerPolicyName", rangerPolicyName);
+            }
+        };
         binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
         bindingRepository.save(binding);
 
-        return new CreateServiceInstanceAppBindingResponse();
+        return new CreateServiceInstanceAppBindingResponse();//.withCredentials(credentials);
 	}
 
 	@Override
@@ -117,27 +126,46 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceId = request.getServiceDefinitionId();
         String instanceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
-        ServiceInstanceBinding binding = getServiceInstanceBinding(bindingId);
+        ServiceInstanceBinding binding = getServiceInstanceBinding(serviceId, bindingId);
 
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
         }
 
+        Map<String, String> credentials = binding.getCredentials();
+        String accountName = credentials.get("accountName");
+        String serviceInstanceResource = credentials.get("serviceInstanceResource");
+        String policyName = credentials.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
-        // TODO Unset permission by Apache Ranger
-        //ocdp.unassignPermissionFromResources();
-        // TODO Delete kerberos principal for OCDP service instance binding
+        // Unset permission by Apache Ranger
+        ocdp.unassignPermissionFromResources(policyName);
+        // Delete kerberos principal for OCDP service instance binding
         System.out.println("Delete service binding kerberos principal.");
-        // TODO Delete LDAP user for OCDP service instance binding
+        System.out.println("Delete kerberos principal.");
+        krbClient kc = new krbClient(this.krbConfig);
+        try{
+            String pn = accountName +  "@ASIAINFO.COM";
+            kc.removePrincipal(pn);
+        }catch(KerberosOperationException e){
+            e.printStackTrace();
+        }
+        // Delete LDAP user for OCDP service instance binding
         System.out.println("Delete service binding ldap user.");
-        // TODO Delete Hadoop resource like hdfs folder, hbase table ...
-        ocdp.deprovisionResources(instanceId);
+        System.out.println("Delete ldap user.");
+        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
+        String baseDN = "ou=People";
+        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
+                .add("cn", accountName)
+                .build();
+        ldap.unbind(ldapName);
+        // Delete Hadoop resource like hdfs folder, hbase table ...
+        ocdp.deprovisionResources(serviceInstanceResource);
 
-        bindingRepository.delete(bindingId);
+        bindingRepository.delete(serviceId, bindingId);
     }
 
-	protected ServiceInstanceBinding getServiceInstanceBinding(String id) {
-		return bindingRepository.findOne(id);
+	protected ServiceInstanceBinding getServiceInstanceBinding(String serviceInstanceId, String bindingId) {
+		return bindingRepository.findOne(serviceInstanceId, bindingId);
 	}
 
 }

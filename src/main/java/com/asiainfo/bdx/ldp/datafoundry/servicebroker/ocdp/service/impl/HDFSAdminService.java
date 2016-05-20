@@ -68,7 +68,7 @@ public class HDFSAdminService implements OCDPAdminService{
         conf.set("hdfs.keytab.file", this.hdfsConfig.getUserKeytab());
         System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
-        String pathName = "/servicebroker/" + serviceInstanceId + UUID.randomUUID().toString();
+        String pathName = "/servicebroker/" + serviceInstanceId + "_" + UUID.randomUUID().toString();
         DistributedFileSystem dfs = new DistributedFileSystem();
         try{
             dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
@@ -118,11 +118,6 @@ public class HDFSAdminService implements OCDPAdminService{
         System.out.println("Unassign read/write/execute permission to hdfs folder.");
         rangerClient rc = rangerConfig.getRangerClient();
         rc.removePolicy(policyId);
-    }
-
-    @Override
-    public Map<String, Object> generateCredentials(){
-        return Collections.singletonMap("uri", new Object());
     }
 
 }

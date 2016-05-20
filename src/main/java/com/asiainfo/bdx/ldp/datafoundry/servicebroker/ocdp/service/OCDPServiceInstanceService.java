@@ -115,7 +115,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         // Set permission by Apache Ranger
         ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
-        ArrayList<String> userList = new ArrayList<String>(){{add("servins_e9fff98e-0313-44d7-8ff3-233bd4627333");}};
+        ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
         String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,

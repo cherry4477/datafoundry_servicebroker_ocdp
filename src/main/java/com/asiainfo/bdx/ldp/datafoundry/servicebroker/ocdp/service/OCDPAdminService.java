@@ -23,5 +23,4 @@ public interface OCDPAdminService {
 
     void unassignPermissionFromResources(String policyId);
 
-    Map<String, Object> generateCredentials();
 }
