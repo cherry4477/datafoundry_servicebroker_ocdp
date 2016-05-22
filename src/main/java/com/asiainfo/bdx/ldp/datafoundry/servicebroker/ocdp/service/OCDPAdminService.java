@@ -14,7 +14,7 @@ public interface OCDPAdminService {
 
     void authentication()throws IOException;
 
-	String provisionResources(String serviceInstanceId);
+	String provisionResources(String serviceInstanceId, String bindingId);
 
     String assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                        List<String> userList, List<String> permList);

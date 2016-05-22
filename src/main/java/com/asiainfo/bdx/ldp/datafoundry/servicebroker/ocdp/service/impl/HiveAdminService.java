@@ -14,7 +14,7 @@ public class HiveAdminService implements OCDPAdminService {
     public void authentication(){ System.out.println("Hive auth successful."); }
 
     @Override
-    public String provisionResources(String serviceInstanceId){
+    public String provisionResources(String serviceInstanceId, String bindingId){
         System.out.println("Create hive table successful.");
         String resourceName = "";
         return resourceName;

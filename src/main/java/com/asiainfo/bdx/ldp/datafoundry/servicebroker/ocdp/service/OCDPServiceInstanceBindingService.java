@@ -15,6 +15,7 @@ import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindin
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
 import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingExistsException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingDoesNotExistException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -65,7 +66,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 		String serviceInstanceId = request.getServiceInstanceId();
         ServiceInstanceBinding binding = bindingRepository.findOne(serviceId, bindingId);
         if (binding != null) {
-           // throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
+           throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
 
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
@@ -97,28 +98,39 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             e.printStackTrace();
         }
         // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId);
+        String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId, bindingId);
         // Set permission by Apache Ranger
+        Map<String, Object> credentials = new HashMap<String, Object>();
         ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
-        String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
-                groupList, userList, permList);
-
-        // generate binding credentials
-        Map<String, String> credentials = new HashMap<String, String>() {
-            {
-                put("serviceInstanceUser", accountName);
-                put("serviceInstancePwd", pwd);
-                put("serviceInstanceResource", serviceInstanceResource);
-                put("rangerPolicyName", rangerPolicyName);
+        int i = 0;
+        while(i <= 20){
+            System.out.println("Try to create ranger policy...");
+            String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
+                    groupList, userList, permList);
+            // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
+            if (rangerPolicyName == null){
+                try{
+                    Thread.sleep(3000);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }else{
+                // generate binding credentials
+                credentials.put("serviceInstanceUser", accountName);
+                credentials.put("serviceInstancePwd", pwd);
+                credentials.put("serviceInstanceResource", serviceInstanceResource);
+                credentials.put("rangerPolicyName", rangerPolicyName);
+                binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
+                break;
             }
-        };
-        binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
+        }
+
         bindingRepository.save(binding);
 
-        return new CreateServiceInstanceAppBindingResponse();//.withCredentials(credentials);
+        return new CreateServiceInstanceAppBindingResponse().withCredentials(credentials);
 	}
 
 	@Override
@@ -132,16 +144,15 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
         }
 
-        Map<String, String> credentials = binding.getCredentials();
-        String accountName = credentials.get("accountName");
-        String serviceInstanceResource = credentials.get("serviceInstanceResource");
-        String policyName = credentials.get("rangerPolicyName");
+        Map<String, Object> credentials = binding.getCredentials();
+        String accountName = (String)credentials.get("accountName");
+        String serviceInstanceResource = (String)credentials.get("serviceInstanceResource");
+        String policyName = (String)credentials.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
         // Unset permission by Apache Ranger
         ocdp.unassignPermissionFromResources(policyName);
         // Delete kerberos principal for OCDP service instance binding
         System.out.println("Delete service binding kerberos principal.");
-        System.out.println("Delete kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         try{
             String pn = accountName +  "@ASIAINFO.COM";
@@ -151,7 +162,6 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Delete LDAP user for OCDP service instance binding
         System.out.println("Delete service binding ldap user.");
-        System.out.println("Delete ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)

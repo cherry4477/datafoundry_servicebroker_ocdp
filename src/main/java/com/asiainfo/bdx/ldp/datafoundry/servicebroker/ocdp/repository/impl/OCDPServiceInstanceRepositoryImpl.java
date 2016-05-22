@@ -46,14 +46,14 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
                 "/metadata/serviceInstanceResource");
         String rangerPolicyName = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/metadata/rangerPolicyName");
-        Map<String, String> serviceInstanceMatadata = new HashMap<String, String>() {
+        Map<String, String> Credential = new HashMap<String, String>() {
             {
                 put("serviceInstanceUser", serviceInstanceUser);
                 put("serviceInstanceResource", serviceInstanceResource);
                 put("rangerPolicyName", rangerPolicyName);
             }
         };
-        instance.setServiceInstanceMetadata(serviceInstanceMatadata);
+        instance.setCredential(Credential);
 
         return instance;
     }

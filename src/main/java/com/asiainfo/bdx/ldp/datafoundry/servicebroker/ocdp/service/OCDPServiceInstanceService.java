@@ -2,6 +2,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.io.IOException;
 import java.net.URI;
+import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -111,24 +112,36 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
 
         // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId);
+        String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId, null);
 
         // Set permission by Apache Ranger
         ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
-        String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
-                groupList, userList, permList);
-
-        Map<String, String> serviceInstanceMatadata = new HashMap<String, String>() {
-            {
-                put("serviceInstanceUser", accountName);
-                put("serviceInstanceResource", serviceInstanceResource);
-                put("rangerPolicyName", rangerPolicyName);
+        int i = 0;
+        while(i <= 20){
+            String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
+                    groupList, userList, permList);
+            // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
+            if (rangerPolicyName == null){
+                try{
+                    Thread.sleep(3000);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }else{
+                Map<String, String> Credential = new HashMap<String, String>() {
+                    {
+                        put("serviceInstanceUser", accountName);
+                        put("serviceInstanceResource", serviceInstanceResource);
+                        put("rangerPolicyName", rangerPolicyName);
+                    }
+                };
+                instance.setCredential(Credential);
+                break;
             }
-        };
-        instance.setServiceInstanceMetadata(serviceInstanceMatadata);
+        }
 
         repository.save(instance);
 
@@ -152,10 +165,10 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         if (instance == null) {
             throw new ServiceInstanceDoesNotExistException(instanceId);
         }
-        Map<String, String> serviceInstanceMatadata = instance.getServiceInstanceMetadata();
-        String accountName = serviceInstanceMatadata.get("accountName");
-        String serviceInstanceResource = serviceInstanceMatadata.get("serviceInstanceResource");
-        String policyName = serviceInstanceMatadata.get("rangerPolicyName");
+        Map<String, String> Credential = instance.getServiceInstanceMetadata();
+        String accountName = Credential.get("accountName");
+        String serviceInstanceResource = Credential.get("serviceInstanceResource");
+        String policyName = Credential.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
         // Unset permission by Apache Ranger
         ocdp.unassignPermissionFromResources(policyName);

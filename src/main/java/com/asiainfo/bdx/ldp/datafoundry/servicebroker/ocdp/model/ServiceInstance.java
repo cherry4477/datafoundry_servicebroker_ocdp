@@ -121,7 +121,7 @@ public class ServiceInstance {
 
     public Map<String, String> getServiceInstanceMetadata() { return ServiceInstanceMetadata; }
 
-    public void setServiceInstanceMetadata(Map<String, String> ServiceInstanceMetadata) {
+    public void setCredential(Map<String, String> ServiceInstanceMetadata) {
         this.ServiceInstanceMetadata = ServiceInstanceMetadata;
     }
 

@@ -15,7 +15,7 @@ public class HBaseAdminService implements OCDPAdminService{
     public void authentication(){ System.out.println("HBase auth successful."); }
 
     @Override
-    public String provisionResources(String serviceInstanceId){
+    public String provisionResources(String serviceInstanceId, String bindingId){
         System.out.println("Create hbase folder successful.");
         String resourceName = "";
         return resourceName;

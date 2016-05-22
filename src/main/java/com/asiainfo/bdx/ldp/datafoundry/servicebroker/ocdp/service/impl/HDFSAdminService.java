@@ -55,7 +55,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String provisionResources(String serviceInstanceId){
+    public String provisionResources(String serviceInstanceId, String bindingId){
         System.out.println("Create hdfs folder successful.");
         try{
             this.authentication();
@@ -68,7 +68,12 @@ public class HDFSAdminService implements OCDPAdminService{
         conf.set("hdfs.keytab.file", this.hdfsConfig.getUserKeytab());
         System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
-        String pathName = "/servicebroker/" + serviceInstanceId + "_" + UUID.randomUUID().toString();
+        String pathName;
+        if(bindingId == null){
+            pathName = "/servicebroker/" + serviceInstanceId;
+        }else{
+            pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
+        }
         DistributedFileSystem dfs = new DistributedFileSystem();
         try{
             dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);

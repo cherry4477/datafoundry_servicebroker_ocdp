@@ -48,7 +48,7 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
                 bindingId +"/Credentials/serviceInstanceResource");
         String rangerPolicyName = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/rangerPolicyName");
-        Map<String, String> credentials = new HashMap<String, String>() {
+        Map<String, Object> credentials = new HashMap<String, Object>() {
             {
                 put("serviceInstanceUser", serviceInstanceUser);
                 put("serviceInstancePwd", serviceInstancePwd);
@@ -74,16 +74,16 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
                 bindingId + "/appGuid", binding.getAppGuid());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/serviceInstanceUser",
-                binding.getCredentials().get("serviceInstanceUser"));
+                (String)binding.getCredentials().get("serviceInstanceUser"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                         bindingId + "/Credentials/serviceInstancePwd",
-                binding.getCredentials().get("serviceInstancePwd"));
+                (String)binding.getCredentials().get("serviceInstancePwd"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId +"/Credentials/serviceInstanceResource",
-                binding.getCredentials().get("serviceInstanceResource"));
+                (String)binding.getCredentials().get("serviceInstanceResource"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/rangerPolicyName",
-                binding.getCredentials().get("rangerPolicyName"));
+                (String)binding.getCredentials().get("rangerPolicyName"));
         System.err.println("save：OCDPServiceInstanceBinding");
 
     }
