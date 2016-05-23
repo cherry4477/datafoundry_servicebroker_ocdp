@@ -120,7 +120,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
         int i = 0;
-        while(i <= 20){
+        while(i++ <= 20){
+            System.out.println("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
                     groupList, userList, permList);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec

@@ -106,7 +106,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
         int i = 0;
-        while(i <= 20){
+        while(i++ <= 20){
             System.out.println("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
                     groupList, userList, permList);
