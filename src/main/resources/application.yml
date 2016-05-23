@@ -1,4 +1,7 @@
 ocdp:
+  security:
+      username: ocdp
+      password: Passw0rd
   etcd:
      endpoint: http://103.235.243.145:2379
   ldap:
