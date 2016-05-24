@@ -22,6 +22,8 @@ import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceReques
 import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
@@ -48,6 +50,8 @@ import org.springframework.ldap.support.LdapNameBuilder;
  */
 @Service
 public class OCDPServiceInstanceService implements ServiceInstanceService {
+
+    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceService.class);
 
     @Autowired
 	private OCDPServiceInstanceRepository repository;
@@ -82,7 +86,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
 
         // Create LDAP user for service instance
-        System.out.println("create ldap user.");
+        logger.info("create ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String accountName = "serviceInstance_" + UUID.randomUUID().toString();
         String baseDN = "ou=People";
@@ -98,7 +102,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ldap.bind(ldapName, null, userAttributes);
 
         //Create Kerberos principal for new LDAP user
-        System.out.println("create kerberos principal.");
+        logger.info("create kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
@@ -119,7 +123,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String policyName = UUID.randomUUID().toString();
         int i = 0;
         while(i++ <= 20){
-            System.out.println("Try to create ranger policy...");
+            logger.info("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
                     groupList, userList, permList);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
@@ -130,6 +134,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
                     e.printStackTrace();
                 }
             }else{
+                logger.info("Ranger policy created.");
                 credentials.put("serviceInstanceUser", accountName);
                 credentials.put("serviceInstanceResource", serviceInstanceResource);
                 credentials.put("rangerPolicyName", rangerPolicyName);
@@ -168,7 +173,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         // Unset permission by Apache Ranger
         ocdp.unassignPermissionFromResources(policyName);
         // Delete Kerberos principal for new LDAP user
-        System.out.println("Delete kerberos principal.");
+        logger.info("Delete kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
@@ -176,7 +181,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             e.printStackTrace();
         }
         // Delete LDAP user for service instance
-        System.out.println("Delete ldap user.");
+        logger.info("Delete ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)

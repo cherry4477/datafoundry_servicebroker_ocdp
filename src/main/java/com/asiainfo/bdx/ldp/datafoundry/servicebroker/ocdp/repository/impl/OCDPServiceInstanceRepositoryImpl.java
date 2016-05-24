@@ -4,6 +4,8 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.EtcdConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
@@ -20,6 +22,8 @@ import java.util.Map;
 @Service
 public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRepository {
 
+    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceRepositoryImpl.class);
+
     private etcdClient etcdClient;
 
     @Autowired
@@ -29,7 +33,7 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
 
     @Override
     public ServiceInstance findOne(String serviceInstanceId) {
-        System.err.println("find one OCDPServiceInstance : " + serviceInstanceId);
+        logger.info("find one OCDPServiceInstance: " + serviceInstanceId);
         if(etcdClient.read("/servicebroker/ocdp/instance/" + serviceInstanceId) == null){
             return null;
         }
@@ -83,7 +87,7 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
 
     @Override
     public void delete(String serviceInstanceId) {
-        System.err.println("delete OCDPServiceInstance: " + serviceInstanceId);
+        logger.info("delete OCDPServiceInstance: " + serviceInstanceId );
         etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId, true);
     }
 

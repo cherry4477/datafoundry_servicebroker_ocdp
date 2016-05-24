@@ -2,9 +2,11 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.impl;
 
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.EtcdConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstanceBinding;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceBindingRepository;
@@ -21,7 +23,9 @@ import java.util.Map;
 @Service
 public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInstanceBindingRepository {
 
-    private com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient etcdClient;
+    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceBindingRepositoryImpl.class);
+
+    private etcdClient etcdClient;
 
     @Autowired
     public OCDPServiceInstanceBindingRepositoryImpl(EtcdConfig etcdCfg){
@@ -30,7 +34,7 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
 
     @Override
     public ServiceInstanceBinding findOne(String serviceInstanceId, String bindingId) {
-        System.err.println("find one： OCDPServiceInstanceBinding");
+        logger.info("find one OCDPServiceInstanceBinding: " + bindingId);
         if(etcdClient.read("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" + bindingId) == null){
             return null;
         }
@@ -97,6 +101,7 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
     @Override
     public void delete(String serviceInstanceId, String bindingId) {
         System.err.println("delete:OCDPServiceInstanceBinding");
+        logger.info("delete:OCDPServiceInstanceBinding: " + bindingId);
         etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" + bindingId, true);
     }
 

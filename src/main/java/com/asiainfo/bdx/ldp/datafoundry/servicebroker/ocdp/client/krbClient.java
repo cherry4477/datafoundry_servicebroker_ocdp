@@ -22,6 +22,8 @@ import org.apache.directory.shared.kerberos.KerberosTime;
 import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
 import org.apache.directory.shared.kerberos.components.EncryptionKey;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Java Client for manipulate MIT Kerberos. Including the following:
@@ -35,6 +37,7 @@ import org.apache.commons.lang.StringUtils;
 public class krbClient {
     //TODO: need to use java client to manipulate MIT kerberos instead of using kadmin CLI.
 
+    private Logger logger = LoggerFactory.getLogger(krbClient.class);
     private static final Set<EncryptionType> DEFAULT_CIPHERS = Collections.unmodifiableSet(
             new HashSet<EncryptionType>() {{
                 add(EncryptionType.DES_CBC_MD5);
@@ -301,11 +304,11 @@ public class krbClient {
                 return ShellCommandUtil.runCommand(command, envp);
             } catch (IOException e) {
                 String message = String.format("Failed to execute the command: %s", e.getLocalizedMessage());
-                System.out.println(message);
+                logger.warn(message);
                 throw new KerberosOperationException(message, e);
             } catch (InterruptedException e) {
                 String message = String.format("Failed to wait for the command to complete: %s", e.getLocalizedMessage());
-                System.out.println(message);
+                logger.warn(message);
                 throw new KerberosOperationException(message, e);
             }
         }

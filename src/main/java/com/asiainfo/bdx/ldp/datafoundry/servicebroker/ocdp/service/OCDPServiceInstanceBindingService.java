@@ -26,6 +26,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * OCDP impl to bind hadoop services.  Binding a service does the following:
@@ -37,6 +39,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class OCDPServiceInstanceBindingService implements ServiceInstanceBindingService {
+
+    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceBindingService.class);
 
     @Autowired
 	private OCDPServiceInstanceBindingRepository bindingRepository;
@@ -70,7 +74,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
         // Create LDAP user for OCDP service instance binding
-        System.out.println("create service binding ldap user.");
+        logger.info("create service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
         String baseDN = "ou=People";
@@ -86,7 +90,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         ldap.bind(ldapName, null, userAttributes);
 
         // Create kerberos principal for OCDP service instance binding
-        System.out.println("create service binding kerberos principal.");
+        logger.info("create service binding kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
@@ -107,7 +111,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String policyName = UUID.randomUUID().toString();
         int i = 0;
         while(i++ <= 20){
-            System.out.println("Try to create ranger policy...");
+            logger.info("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource,
                     groupList, userList, permList);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
@@ -118,6 +122,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
                     e.printStackTrace();
                 }
             }else{
+                logger.info("Ranger policy created.");
                 // generate binding credentials
                 credentials.put("serviceInstanceBingingUser", accountName);
                 credentials.put("serviceInstanceBingingPwd", pwd);
@@ -152,7 +157,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Unset permission by Apache Ranger
         ocdp.unassignPermissionFromResources(policyName);
         // Delete kerberos principal for OCDP service instance binding
-        System.out.println("Delete service binding kerberos principal.");
+        logger.info("Delete service binding kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
@@ -160,7 +165,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             e.printStackTrace();
         }
         // Delete LDAP user for OCDP service instance binding
-        System.out.println("Delete service binding ldap user.");
+        logger.info("Delete service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
