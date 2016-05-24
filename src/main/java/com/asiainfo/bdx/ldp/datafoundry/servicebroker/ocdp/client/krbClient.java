@@ -1,16 +1,5 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.ShellCommandUtil;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
-import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
-import org.apache.directory.server.kerberos.shared.keytab.Keytab;
-import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
-import org.apache.directory.shared.kerberos.KerberosTime;
-import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
-import org.apache.directory.shared.kerberos.components.EncryptionKey;
-import org.apache.commons.lang.StringUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +8,20 @@ import java.util.HashSet;
 import java.util.Collections;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.ShellCommandUtil;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
+import org.apache.directory.server.kerberos.shared.keytab.Keytab;
+import org.apache.directory.server.kerberos.shared.keytab.KeytabEncoder;
+import org.apache.directory.server.kerberos.shared.keytab.KeytabEntry;
+import org.apache.directory.shared.kerberos.KerberosTime;
+import org.apache.directory.shared.kerberos.codec.types.EncryptionType;
+import org.apache.directory.shared.kerberos.components.EncryptionKey;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Java Client for manipulate MIT Kerberos. Including the following:
@@ -243,8 +246,7 @@ public class krbClient {
      * @param keytabFilePath a File containing the absolute path to where the keytab data is to be stored
      * @return true if the keytab file was successfully created; false otherwise
      */
-
-    public boolean createKetTabFile(Keytab keytab, String keytabFilePath)
+    public boolean createKeyTabFile(Keytab keytab, String keytabFilePath)
             throws KerberosOperationException{
         if (keytabFilePath == null)
         {
@@ -258,6 +260,27 @@ public class krbClient {
         }catch (IOException e){
             throw new KerberosOperationException("Fail to export keytab file", e);
         }
+    }
+
+    /**
+     * Create a keytab string using the base64 encode
+     * <p/>
+     * @param principal a String containing the principal to test
+     * @param password  a String containing the password to use when creating the principal
+     * @param keyNumber a Integer indicating the key number for the keytab entries
+     * @return a keytab string using the base64 encode if keytab was successfully created; empty string otherwise
+     */
+    public  String createKeyTabString(String principal, String password, Integer keyNumber){
+        String keyTabString = "";
+        try{
+            Keytab keytab = this.createKeyTab(principal, password, keyNumber);
+            KeytabEncoder keytabEncoder = new KeytabEncoder();
+            ByteBuffer keytabByteBuffer = keytabEncoder.write(keytab.getKeytabVersion(), keytab.getEntries());
+            keyTabString = Base64.encodeBase64String(keytabByteBuffer.array());
+        }catch (KerberosOperationException e){
+            e.printStackTrace();
+        }
+        return keyTabString;
     }
 
     private void ensureKeytabFolderExists(String keytabFilePath) {

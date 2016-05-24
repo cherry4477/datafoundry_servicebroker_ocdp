@@ -88,7 +88,6 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public String assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                               List<String> userList, List<String> permList){
-        System.out.println("Assign read/write/execute permission to hdfs folder.");
         rangerClient rc = rangerConfig.getRangerClient();
         return rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
                 "OCDP_hadoop", "hdfs", groupList, userList, permList);

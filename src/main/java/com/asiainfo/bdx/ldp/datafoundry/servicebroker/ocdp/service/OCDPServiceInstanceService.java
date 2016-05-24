@@ -1,7 +1,5 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.io.IOException;
-import java.net.URI;
 import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.Map;
@@ -11,6 +9,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
+
 
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
@@ -30,7 +29,6 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
-import org.apache.directory.server.kerberos.shared.keytab.Keytab;
 
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -102,11 +100,10 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         //Create Kerberos principal for new LDAP user
         System.out.println("create kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
+        String pn = accountName +  "@ASIAINFO.COM";
+        String pwd = UUID.randomUUID().toString();
         try{
-            String pn = accountName +  "@ASIAINFO.COM";
-            String pwd = UUID.randomUUID().toString();
             kc.createPrincipal(pn, pwd);
-            //Keytab kt = kc.createKeyTab(pn, pwd, null);
         }catch(KerberosOperationException e){
             e.printStackTrace();
         }
@@ -115,11 +112,12 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String serviceInstanceResource = ocdp.provisionResources(serviceInstanceId, null);
 
         // Set permission by Apache Ranger
+        Map<String, String> credentials = new HashMap<String, String>();
         ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
-        int i = 0;
+        int i = 20;
         while(i++ <= 20){
             System.out.println("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
@@ -132,17 +130,13 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
                     e.printStackTrace();
                 }
             }else{
-                Map<String, String> Credential = new HashMap<String, String>() {
-                    {
-                        put("serviceInstanceUser", accountName);
-                        put("serviceInstanceResource", serviceInstanceResource);
-                        put("rangerPolicyName", rangerPolicyName);
-                    }
-                };
-                instance.setCredential(Credential);
+                credentials.put("serviceInstanceUser", accountName);
+                credentials.put("serviceInstanceResource", serviceInstanceResource);
+                credentials.put("rangerPolicyName", rangerPolicyName);
                 break;
             }
         }
+        instance.setCredential(credentials);
 
         repository.save(instance);
 
@@ -177,8 +171,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         System.out.println("Delete kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         try{
-            String pn = accountName +  "@ASIAINFO.COM";
-            kc.removePrincipal(pn);
+            kc.removePrincipal(accountName +  "@ASIAINFO.COM");
         }catch(KerberosOperationException e){
             e.printStackTrace();
         }
