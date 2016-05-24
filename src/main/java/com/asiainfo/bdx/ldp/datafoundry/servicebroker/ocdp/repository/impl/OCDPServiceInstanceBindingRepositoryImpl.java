@@ -97,7 +97,7 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
     @Override
     public void delete(String serviceInstanceId, String bindingId) {
         System.err.println("delete:OCDPServiceInstanceBinding");
-        etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" + bindingId);
+        etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" + bindingId, true);
     }
 
 }

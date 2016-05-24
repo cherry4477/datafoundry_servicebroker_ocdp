@@ -65,10 +65,10 @@ public class etcdClient {
         return result;
     }
 
-    public EtcdResult deleteDir(String key){
+    public EtcdResult deleteDir(String key, boolean recursive){
         EtcdResult result = new EtcdResult();
         try {
-            result = this.etcdclient.deleteDirectory(key);
+            result = this.etcdclient.deleteDirectory(key, recursive);
         } catch (EtcdClientException e) {
             e.printStackTrace();
         }

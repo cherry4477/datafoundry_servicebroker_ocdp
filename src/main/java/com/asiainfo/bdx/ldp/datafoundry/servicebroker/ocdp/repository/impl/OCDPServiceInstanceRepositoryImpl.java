@@ -84,7 +84,7 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
     @Override
     public void delete(String serviceInstanceId) {
         System.err.println("delete OCDPServiceInstance: " + serviceInstanceId);
-        etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId);
+        etcdClient.deleteDir("/servicebroker/ocdp/instance/" + serviceInstanceId, true);
     }
 
 }

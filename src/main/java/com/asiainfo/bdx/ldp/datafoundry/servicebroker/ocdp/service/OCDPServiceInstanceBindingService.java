@@ -105,7 +105,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
-        int i = 20;
+        int i = 0;
         while(i++ <= 20){
             System.out.println("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource,
@@ -145,7 +145,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
 
         Map<String, Object> credentials = binding.getCredentials();
-        String accountName = (String)credentials.get("accountName");
+        String accountName = (String)credentials.get("serviceInstanceBingingUser");
         String serviceInstanceBingingResource = (String)credentials.get("serviceInstanceBingingResource");
         String policyName = (String)credentials.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);

@@ -117,7 +117,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
-        int i = 20;
+        int i = 0;
         while(i++ <= 20){
             System.out.println("Try to create ranger policy...");
             String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
@@ -161,7 +161,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             throw new ServiceInstanceDoesNotExistException(instanceId);
         }
         Map<String, String> Credential = instance.getServiceInstanceMetadata();
-        String accountName = Credential.get("accountName");
+        String accountName = Credential.get("serviceInstanceUser");
         String serviceInstanceResource = Credential.get("serviceInstanceResource");
         String policyName = Credential.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
