@@ -14,13 +14,13 @@ public interface OCDPAdminService {
 
     void authentication()throws IOException;
 
-	String provisionResources(String serviceInstanceId, String bindingId);
+	String provisionResources(String serviceInstanceId, String bindingId) throws IOException;
 
-    String assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
+    boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                        List<String> userList, List<String> permList);
 
-    boolean deprovisionResources(String serviceInstanceResuorceName);
+    void deprovisionResources(String serviceInstanceResuorceName) throws IOException;
 
-    void unassignPermissionFromResources(String policyId);
+    boolean unassignPermissionFromResources(String policyId);
 
 }

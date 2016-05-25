@@ -1,6 +1,8 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.zip.InflaterOutputStream;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
@@ -63,7 +65,8 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
     }
 
 	@Override
-	public CreateServiceInstanceBindingResponse createServiceInstanceBinding(CreateServiceInstanceBindingRequest request) {
+	public CreateServiceInstanceBindingResponse createServiceInstanceBinding(CreateServiceInstanceBindingRequest request)
+            throws OCDPServiceException {
         String serviceId = request.getServiceDefinitionId();
 		String bindingId = request.getBindingId();
 		String serviceInstanceId = request.getServiceInstanceId();
@@ -77,17 +80,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         logger.info("create service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", accountName)
-                .build();
-        Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("sn", accountName);
-        BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("top");
-        classAttribute.add("person");
-        userAttributes.put(classAttribute);
-        ldap.bind(ldapName, null, userAttributes);
+        try{
+            this.createLDAPUser(ldap, accountName);
+        }catch (Exception e){
+            logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
+            e.printStackTrace();
+            throw new OCDPServiceException("LDAP user create fail due to: " + e.getLocalizedMessage());
+        }
 
         // Create kerberos principal for OCDP service instance binding
         logger.info("create service binding kerberos principal.");
@@ -99,23 +98,43 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             kc.createPrincipal(pn, pwd);
             keyTabString = kc.createKeyTabString(pn, pwd, null);
         }catch(KerberosOperationException e){
+            logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
+            logger.info("Rollback LDAP user: " + accountName);
+            this.removeLDAPUser(ldap, accountName);
+            throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
         }
         // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceBingingResource = ocdp.provisionResources(serviceInstanceId, bindingId);
+        String serviceInstanceBingingResource = "";
+        try{
+            serviceInstanceBingingResource = ocdp.provisionResources(serviceInstanceId, bindingId);
+        }catch (IOException e){
+            logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
+            e.printStackTrace();
+            logger.info("Rollback LDAP user: " + accountName);
+            this.removeLDAPUser(ldap, accountName);
+            logger.info("Rollback kerberos principal: " + accountName);
+            try{
+                kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+            }catch(KerberosOperationException ex){
+                ex.printStackTrace();
+            }
+            throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
+        }
         // Set permission by Apache Ranger
         Map<String, Object> credentials = new HashMap<String, Object>();
         ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
+        boolean policyCreateResult = false;
         int i = 0;
         while(i++ <= 20){
             logger.info("Try to create ranger policy...");
-            String rangerPolicyName = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource,
+            policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource,
                     groupList, userList, permList);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
-            if (rangerPolicyName == null){
+            if (! policyCreateResult){
                 try{
                     Thread.sleep(3000);
                 }catch (InterruptedException e){
@@ -128,9 +147,27 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
                 credentials.put("serviceInstanceBingingPwd", pwd);
                 credentials.put("serviceInstanceBindingKeytab", keyTabString);
                 credentials.put("serviceInstanceBingingResource", serviceInstanceBingingResource);
-                credentials.put("rangerPolicyName", rangerPolicyName);
+                credentials.put("rangerPolicyName", policyName);
                 break;
             }
+        }
+        if (! policyCreateResult){
+            logger.error("Ranger policy create fail.");
+            logger.info("Rollback LDAP user: " + accountName);
+            this.removeLDAPUser(ldap, accountName);
+            logger.info("Rollback kerberos principal: " + accountName);
+            try{
+                kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+            }catch(KerberosOperationException ex){
+                ex.printStackTrace();
+            }
+            logger.info("Rollback OCDP resource: " + serviceInstanceBingingResource);
+            try{
+                ocdp.deprovisionResources(serviceInstanceBingingResource);
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+            throw new OCDPServiceException("Ranger policy create fail.");
         }
         binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
 
@@ -140,8 +177,9 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 	}
 
 	@Override
-	public void deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request) {
-        String serviceId = request.getServiceDefinitionId();
+	public void deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request)
+            throws OCDPServiceException{
+        String serviceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
         ServiceInstanceBinding binding = getServiceInstanceBinding(serviceId, bindingId);
 
@@ -155,25 +193,40 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String policyName = (String)credentials.get("rangerPolicyName");
         OCDPAdminService ocdp = getOCDPAdminService(serviceId);
         // Unset permission by Apache Ranger
-        ocdp.unassignPermissionFromResources(policyName);
+        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyName);
+        if(!policyDeleteResult)
+        {
+            logger.error("Ranger policy delete fail.");
+            throw new OCDPServiceException("Ranger policy delete fail.");
+        }
         // Delete kerberos principal for OCDP service instance binding
         logger.info("Delete service binding kerberos principal.");
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
         }catch(KerberosOperationException e){
+            logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
+            throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
         }
         // Delete LDAP user for OCDP service instance binding
         logger.info("Delete service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", accountName)
-                .build();
-        ldap.unbind(ldapName);
+        try{
+            this.removeLDAPUser(ldap, accountName);
+        }catch (Exception e){
+            logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
+            e.printStackTrace();
+            throw new OCDPServiceException("Delete LDAP user fail due to: " + e.getLocalizedMessage());
+        }
         // Delete Hadoop resource like hdfs folder, hbase table ...
-        ocdp.deprovisionResources(serviceInstanceBingingResource);
+        try{
+            ocdp.deprovisionResources(serviceInstanceBingingResource);
+        }catch(IOException e){
+            logger.error("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
+            e.printStackTrace();
+            throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
+        }
 
         bindingRepository.delete(serviceId, bindingId);
     }
@@ -181,5 +234,27 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 	protected ServiceInstanceBinding getServiceInstanceBinding(String serviceInstanceId, String bindingId) {
 		return bindingRepository.findOne(serviceInstanceId, bindingId);
 	}
+
+    private void createLDAPUser(LdapTemplate ldap, String accountName){
+        String baseDN = "ou=People";
+        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
+                .add("cn", accountName)
+                .build();
+        Attributes userAttributes = new BasicAttributes();
+        userAttributes.put("sn", accountName);
+        BasicAttribute classAttribute = new BasicAttribute("objectClass");
+        classAttribute.add("top");
+        classAttribute.add("person");
+        userAttributes.put(classAttribute);
+        ldap.bind(ldapName, null, userAttributes);
+    }
+
+    private void removeLDAPUser(LdapTemplate ldap, String accountName){
+        String baseDN = "ou=People";
+        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
+                .add("cn", accountName)
+                .build();
+        ldap.unbind(ldapName);
+    }
 
 }

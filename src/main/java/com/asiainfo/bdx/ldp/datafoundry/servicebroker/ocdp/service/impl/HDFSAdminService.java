@@ -4,6 +4,7 @@ import java.util.List;
 import java.io.IOException;
 import java.net.URI;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
@@ -56,8 +57,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String provisionResources(String serviceInstanceId, String bindingId){
-        logger.info("Create hdfs folder successful.");
+    public String provisionResources(String serviceInstanceId, String bindingId) throws IOException{
         try{
             this.authentication();
         }catch (IOException e){
@@ -84,14 +84,17 @@ public class HDFSAdminService implements OCDPAdminService{
                 dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
             }
             dfs.setQuota(new Path(pathName), 4096, 4096);
+            logger.info("Create hdfs folder successful.");
         }catch (IOException e){
+            logger.error("HDFS folder create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
+            throw e;
         }
         return pathName;
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
+    public boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                               List<String> userList, List<String> permList){
         rangerClient rc = rangerConfig.getRangerClient();
         return rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
@@ -99,8 +102,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public boolean deprovisionResources(String serviceInstanceResuorceName){
-        logger.info("Delete hdfs folder successful.");
+    public void deprovisionResources(String serviceInstanceResuorceName) throws IOException{
         try{
             this.authentication();
         }catch (IOException e){
@@ -116,17 +118,19 @@ public class HDFSAdminService implements OCDPAdminService{
         try{
             dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
             dfs.delete(new Path(serviceInstanceResuorceName));
+            logger.info("Delete hdfs folder successful.");
         }catch (IOException e){
+            logger.error("HDFS folder delete fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
+            throw e;
         }
-        return false;
     }
 
     @Override
-    public void unassignPermissionFromResources(String policyId){
+    public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hdfs folder.");
         rangerClient rc = rangerConfig.getRangerClient();
-        rc.removePolicy(policyId);
+        return rc.removePolicy(policyId);
     }
 
 }

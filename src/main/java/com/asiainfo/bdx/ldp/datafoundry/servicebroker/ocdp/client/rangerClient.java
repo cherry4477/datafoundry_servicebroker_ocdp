@@ -82,7 +82,7 @@ public class rangerClient {
         return rp;
     }
 
-    public String createPolicy(String policyName, String resourceName, String description,
+    public boolean createPolicy(String policyName, String resourceName, String description,
                              String repositoryName, String repositoryType, List<String> groupList,
                              List<String> userList, List<String> permList){
         boolean status = false;
@@ -101,7 +101,7 @@ public class rangerClient {
         }catch (IOException e){
             e.printStackTrace();
         }
-        return (status ? policyName : null);
+        return status;
     }
 
     public boolean removePolicy(String policyID){

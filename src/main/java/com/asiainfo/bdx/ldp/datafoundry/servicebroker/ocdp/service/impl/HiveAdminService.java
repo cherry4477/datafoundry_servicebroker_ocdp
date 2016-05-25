@@ -26,22 +26,21 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
+    public boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                               List<String> userList, List<String> permList){
         logger.info("Assign read/write/execute permission to hive table.");
-        String rangerPolicyId = "";
-        return rangerPolicyId;
+        return true;
     }
 
     @Override
-    public boolean deprovisionResources(String serviceInstanceResuorceName){
+    public void deprovisionResources(String serviceInstanceResuorceName){
         logger.info("Delete hive table successful.");
-        return false;
     }
 
     @Override
-    public void unassignPermissionFromResources(String policyId){
+    public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hive table.");
+        return true;
     }
 
 }
