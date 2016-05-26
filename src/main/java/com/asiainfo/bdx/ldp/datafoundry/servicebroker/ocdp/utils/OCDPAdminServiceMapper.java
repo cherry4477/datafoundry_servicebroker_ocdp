@@ -10,13 +10,13 @@ public class OCDPAdminServiceMapper {
 
     private static final Map<String, String> OCDP_ADMIN_SERVICE_MAP = new HashMap<String, String>(){
         {
-            put("datafoundry-hdfs-service-broker", "HDFSAdminService");
-            put("datafoundry-hbase-service-broker", "HBaseAdminService");
-            put("datafoundry-hive-service-broker", "HiveAdminService");
+            put("hdfs-service", "HDFSAdminService");
+            put("hbase-service", "HBaseAdminService");
+            put("hive-service", "HiveAdminService");
         }
     };
 
-    public static String getOCDPAdminService(String serviceID){
-        return OCDP_ADMIN_SERVICE_MAP.get(serviceID);
+    public static String getOCDPAdminService(String serviceDefinitionId){
+        return OCDP_ADMIN_SERVICE_MAP.get(serviceDefinitionId);
     }
 }

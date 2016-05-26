@@ -58,24 +58,24 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
     public OCDPServiceInstanceBindingService() {}
 
-    private OCDPAdminService getOCDPAdminService(String serviceID){
+    private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
         return  (OCDPAdminService) this.context.getBean(
-                OCDPAdminServiceMapper.getOCDPAdminService(serviceID)
+                OCDPAdminServiceMapper.getOCDPAdminService(serviceDefinitionId)
         );
     }
 
 	@Override
 	public CreateServiceInstanceBindingResponse createServiceInstanceBinding(CreateServiceInstanceBindingRequest request)
             throws OCDPServiceException {
-        String serviceId = request.getServiceDefinitionId();
+        String serviceDefinitionId = request.getServiceDefinitionId();
 		String bindingId = request.getBindingId();
 		String serviceInstanceId = request.getServiceInstanceId();
-        ServiceInstanceBinding binding = bindingRepository.findOne(serviceId, bindingId);
+        ServiceInstanceBinding binding = bindingRepository.findOne(serviceDefinitionId, bindingId);
         if (binding != null) {
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
 
-        OCDPAdminService ocdp = getOCDPAdminService(serviceId);
+        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
         LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
@@ -97,7 +97,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         try{
             kc.createPrincipal(pn, pwd);
             keyTabString = kc.createKeyTabString(pn, pwd, null);
-        }catch(KerberosOperationException e){
+        }catch(Exception e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
@@ -116,7 +116,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(KerberosOperationException ex){
+            }catch(Exception ex){
                 ex.printStackTrace();
             }
             throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
@@ -158,7 +158,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(KerberosOperationException ex){
+            }catch(Exception ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback OCDP resource: " + serviceInstanceBingingResource);
@@ -204,7 +204,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-        }catch(KerberosOperationException e){
+        }catch(Exception e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());

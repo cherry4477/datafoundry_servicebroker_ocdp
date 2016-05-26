@@ -68,9 +68,9 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
     public OCDPServiceInstanceService() {}
 
-    private OCDPAdminService getOCDPAdminService(String serviceID){
+    private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
         return  (OCDPAdminService) this.context.getBean(
-                OCDPAdminServiceMapper.getOCDPAdminService(serviceID)
+                OCDPAdminServiceMapper.getOCDPAdminService(serviceDefinitionId)
         );
     }
 
@@ -105,7 +105,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String pwd = UUID.randomUUID().toString();
         try{
             kc.createPrincipal(pn, pwd);
-        }catch(KerberosOperationException e){
+        }catch(Exception e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
@@ -125,7 +125,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(KerberosOperationException ex){
+            }catch(Exception ex){
                 ex.printStackTrace();
             }
             throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
@@ -165,7 +165,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(KerberosOperationException ex){
+            }catch(Exception ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback OCDP resource: " + serviceInstanceResource);
@@ -218,7 +218,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-        }catch(KerberosOperationException e){
+        }catch(Exception e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());

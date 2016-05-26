@@ -7,6 +7,7 @@ This project uses the Spring Cloud - Cloud Foundry Service Broker to implement O
 
 ## Getting Started
 
+### 1 Configure connection properties
 Configure some connectivity properties (LDAP, kerberos, Hadoop ...) in [application.yml](src/main/resources/application.yml):
 
      ocdp:
@@ -36,7 +37,8 @@ Configure some connectivity properties (LDAP, kerberos, Hadoop ...) in [applicat
            krbFilePath: <krb5.conf file path>
            hdfsURL: <HDFS name node URL>
 
-Build it:
+### 2 Run OCDP service broker in VM:
+Build OCDp service broker by gradle command:
 
     ./gradlew build
 
@@ -48,3 +50,17 @@ Then you can access service broker APIs like below:
 
     curl -H "X-Broker-API-Version: 2.8" http://<ocdp.security.username>:<ocdp.security.password>@localhost:8080/v2/catalog
 
+### 3 Run OCDP service broker in docker container:
+Copy krb5.conf and hdfs.keytab files to source code folder: src/main/docker/config/
+
+    cd src/main/docker
+    mkdir config
+    cp <path for krb5.conf> <path for hdfs.keytab> src/main/docker/config/
+
+Build OCDP service broker by gradle command:
+
+    ./gradlew build buildDocker
+
+Then you can start OCDP service broker container by docker command like below:
+
+    docker run -p <local port>:8080 --add-host <hostname:ip> -t asiainfo-ldp/datafoundry-ocdp-service-broker
