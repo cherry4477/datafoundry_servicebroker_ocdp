@@ -2,7 +2,6 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.zip.InflaterOutputStream;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
@@ -93,30 +92,38 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         krbClient kc = new krbClient(this.krbConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
-        String keyTabString = "";
+        String keyTabString;
         try{
             kc.createPrincipal(pn, pwd);
             keyTabString = kc.createKeyTabString(pn, pwd, null);
-        }catch(Exception e){
+        }catch(KerberosOperationException e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch(Exception ex){
+                ex.printStackTrace();
+            }
             throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
         }
         // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceBingingResource = "";
+        String serviceInstanceBingingResource;
         try{
             serviceInstanceBingingResource = ocdp.provisionResources(serviceInstanceId, bindingId);
-        }catch (IOException e){
+        }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch(Exception ex){
+                ex.printStackTrace();
+            }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(Exception ex){
+            }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
             throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
@@ -154,17 +161,21 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         if (! policyCreateResult){
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch(Exception ex){
+                ex.printStackTrace();
+            }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(Exception ex){
+            }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback OCDP resource: " + serviceInstanceBingingResource);
             try{
                 ocdp.deprovisionResources(serviceInstanceBingingResource);
-            }catch (IOException e){
+            }catch (Exception e){
                 e.printStackTrace();
             }
             throw new OCDPServiceException("Ranger policy create fail.");
@@ -204,7 +215,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-        }catch(Exception e){
+        }catch(KerberosOperationException e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
@@ -222,7 +233,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Delete Hadoop resource like hdfs folder, hbase table ...
         try{
             ocdp.deprovisionResources(serviceInstanceBingingResource);
-        }catch(IOException e){
+        }catch(Exception e){
             logger.error("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());

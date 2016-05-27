@@ -43,7 +43,7 @@ public class HDFSAdminService implements OCDPAdminService{
     public rangerConfig rangerConfig;
 
     @Override
-    public void authentication() throws IOException{
+    public void authentication() throws Exception{
         Configuration conf = new Configuration();
         conf.set("hadoop.security.authentication", "Kerberos");
         conf.set("hdfs.kerberos.principal", this.hdfsConfig.getHdfsSuperUser());
@@ -52,13 +52,13 @@ public class HDFSAdminService implements OCDPAdminService{
         UserGroupInformation.setConfiguration(conf);
         try{
             UserGroupInformation.loginUserFromKeytab(this.hdfsConfig.getHdfsSuperUser(), this.hdfsConfig.getUserKeytab());
-        }catch (IOException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
 
     @Override
-    public String provisionResources(String serviceInstanceId, String bindingId) throws IOException{
+    public String provisionResources(String serviceInstanceId, String bindingId) throws Exception{
         try{
             this.authentication();
         }catch (IOException e){
@@ -71,23 +71,21 @@ public class HDFSAdminService implements OCDPAdminService{
         System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
         String pathName;
-        if(bindingId == null){
-            pathName = "/servicebroker/" + serviceInstanceId;
-        }else{
-            pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
-        }
         DistributedFileSystem dfs = new DistributedFileSystem();
         try{
             dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
             if(bindingId == null){
+                pathName = "/servicebroker/" + serviceInstanceId;
                 dfs.mkdirs(new Path(pathName), FS_PERMISSION);
+                // Only hdfs folder for service instance need set name/storage space quota
+                Map<String, Long> quota = this.getQuotaFromPlan();
+                dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
             }else {
+                pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
                 dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
             }
-            Map<String, Long> quota = this.getQuotaFromPlan();
-            dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
             logger.info("Create hdfs folder successful.");
-        }catch (IOException e){
+        }catch (Exception e){
             logger.error("HDFS folder create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw e;
@@ -104,7 +102,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public void deprovisionResources(String serviceInstanceResuorceName) throws IOException{
+    public void deprovisionResources(String serviceInstanceResuorceName) throws Exception{
         try{
             this.authentication();
         }catch (IOException e){
@@ -121,7 +119,7 @@ public class HDFSAdminService implements OCDPAdminService{
             dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
             dfs.delete(new Path(serviceInstanceResuorceName));
             logger.info("Delete hdfs folder successful.");
-        }catch (IOException e){
+        }catch (Exception e){
             logger.error("HDFS folder delete fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw e;

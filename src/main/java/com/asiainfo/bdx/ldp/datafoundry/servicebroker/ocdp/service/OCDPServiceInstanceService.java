@@ -105,11 +105,15 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String pwd = UUID.randomUUID().toString();
         try{
             kc.createPrincipal(pn, pwd);
-        }catch(Exception e){
+        }catch(KerberosOperationException e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
             throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
         }
 
@@ -117,15 +121,19 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String serviceInstanceResource;
         try{
             serviceInstanceResource = ocdp.provisionResources(serviceInstanceId, null);
-        }catch (IOException e){
+        }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(Exception ex){
+            }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
             throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
@@ -161,17 +169,21 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         if (! policyCreateResult){
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
-            this.removeLDAPUser(ldap, accountName);
+            try{
+                this.removeLDAPUser(ldap, accountName);
+            }catch (Exception ex){
+                ex.printStackTrace();
+            }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
                 kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-            }catch(Exception ex){
+            }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback OCDP resource: " + serviceInstanceResource);
             try{
                 ocdp.deprovisionResources(serviceInstanceResource);
-            }catch (IOException e){
+            }catch (Exception e){
                 e.printStackTrace();
             }
             throw new OCDPServiceException("Ranger policy create fail.");
@@ -218,7 +230,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         krbClient kc = new krbClient(this.krbConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
-        }catch(Exception e){
+        }catch(KerberosOperationException e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
@@ -236,7 +248,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         // Delete Hadoop resource like hdfs folder, hbase table ...
         try{
             ocdp.deprovisionResources(serviceInstanceResource);
-        }catch (IOException e){
+        }catch (Exception e){
             logger.error("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());

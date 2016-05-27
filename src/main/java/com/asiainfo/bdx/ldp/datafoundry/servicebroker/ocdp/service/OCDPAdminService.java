@@ -12,14 +12,14 @@ import java.util.List;
  */
 public interface OCDPAdminService {
 
-    void authentication()throws IOException;
+    void authentication() throws Exception;
 
-	String provisionResources(String serviceInstanceId, String bindingId) throws IOException;
+	String provisionResources(String serviceInstanceId, String bindingId) throws Exception;
 
     boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                        List<String> userList, List<String> permList);
 
-    void deprovisionResources(String serviceInstanceResuorceName) throws IOException;
+    void deprovisionResources(String serviceInstanceResuorceName) throws Exception;
 
     boolean unassignPermissionFromResources(String policyId);
 
