@@ -7,13 +7,13 @@ ocdp:
   ldap:
       url: ldap://ochadoop06.jcloud.local
       userDN: cn=root,dc=asiainfo,dc=com
-      password: 00AAaa00
+      password: Passw0rd
       base: dc=asiainfo,dc=com
   krb:
       kdcHost: ochadoop06.jcloud.local
       user-principal: admin/admin@ASIAINFO.COM
       keytab-location: /tmp/admin.keytab
-      adminPwd: 00AAaa00
+      adminPwd: Passw0rd
       realm: ASIAINFO.COM
   ranger:
       rangerUri: http://ocdpbroker.jcloud.local:6080
@@ -21,8 +21,8 @@ ocdp:
       rangerPwd: admin
   hdfs:
       hdfsSuperUser: hdfs-OCDP@ASIAINFO.COM
-      userKeytab: /Users/baikai/Work/Dev/AsiaInfo/hadoopConf/hdfs.keytab
-      krbFilePath: /Users/baikai/Work/Dev/AsiaInfo/hadoopConf/krb5.conf
+      userKeytab: /tmp/hdfs.keytab
+      krbFilePath: /etc/krb5.conf
       hdfsURL: hdfs://ocdpbroker.jcloud.local
 
 

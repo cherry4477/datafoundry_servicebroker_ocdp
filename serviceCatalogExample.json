@@ -1,0 +1,70 @@
+{"serviceDefinitions":[
+  {"id":"hdfs-shared",
+    "name":"hdfs",
+    "description":"A Hadoop hdfs service broker implementation",
+    "bindable":true,
+    "plan_updateable":false,
+    "plans":[
+      {"id":"hdfs-plan",
+        "name":"Default hdfs Plan",
+        "description":"This is a default hdfs plan.  All services are created equally.",
+        "metadata":{
+          "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
+          "bullets":["Shared hdfs server","20 GB Storage (not enforced)","10 concurrent connections (not enforced)"]
+        },
+        "free":false
+      }],
+    "tags":["hdfs","document"],
+    "metadata":{
+      "longDescription":"hdfs Service",
+      "domentationUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp",
+      "providerDisplayName":"aisainfo",
+      "displayName":"hdfs",
+      "imageUrl":"http://...",
+      "supportUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp"
+    },"requires":[],"dashboard_client":null},
+  {"id":"hbase-shared",
+    "name":"hbase",
+    "description":"A Hadoop hbase service broker implementation",
+    "bindable":true,
+    "plan_updateable":false,
+    "plans":[
+      {"id":"hbase-plan",
+        "name":"Default hbase Plan",
+        "description":"This is a default hbase plan.  All services are created equally.",
+        "metadata":{
+          "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
+          "bullets":["Shared hbase server","20 GB Storage (not enforced)","10 concurrent connections (not enforced)"]},
+        "free":false}],
+    "tags":["hbase","document"],
+    "metadata":{
+      "longDescription":"hbase Service",
+      "domentationUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp",
+      "providerDisplayName":"asiainfo",
+      "displayName":"hbase",
+      "imageUrl":"http://...",
+      "supportUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp"},
+    "requires":[],"dashboard_client":null},
+  {"id":"hive-shared",
+    "name":"hive",
+    "description":"A Hadoop hive service broker implementation",
+    "bindable":true,
+    "plan_updateable":false,
+    "plans":[
+      {"id":"hive-plan",
+        "name":"Default hive Plan",
+        "description":"This is a default hive plan.  All services are created equally.",
+        "metadata":{
+          "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
+          "bullets":["Shared hive server","20 GB Storage (not enforced)","10 concurrent connections (not enforced)"]},
+        "free":false}],
+    "tags":["hive","document"],
+    "metadata":{
+      "longDescription":"hive Service",
+      "domentationUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp",
+      "providerDisplayName":"asiainfo",
+      "displayName":"hive",
+      "imageUrl":"http://...",
+      "supportUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp"},
+    "requires":[],"dashboard_client":null}
+]}

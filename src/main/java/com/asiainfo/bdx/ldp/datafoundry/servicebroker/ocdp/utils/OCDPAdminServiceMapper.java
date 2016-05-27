@@ -10,9 +10,9 @@ public class OCDPAdminServiceMapper {
 
     private static final Map<String, String> OCDP_ADMIN_SERVICE_MAP = new HashMap<String, String>(){
         {
-            put("hdfs-service", "HDFSAdminService");
-            put("hbase-service", "HBaseAdminService");
-            put("hive-service", "HiveAdminService");
+            put("hdfs-shared", "HDFSAdminService");
+            put("hbase-shared", "HBaseAdminService");
+            put("hive-shared", "HiveAdminService");
         }
     };
 

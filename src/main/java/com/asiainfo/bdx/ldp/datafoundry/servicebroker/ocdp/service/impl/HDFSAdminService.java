@@ -1,5 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.util.List;
 import java.io.IOException;
 import java.net.URI;
@@ -82,7 +84,8 @@ public class HDFSAdminService implements OCDPAdminService{
             }else {
                 dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
             }
-            dfs.setQuota(new Path(pathName), 4096, 4096);
+            Map<String, Long> quota = this.getQuotaFromPlan();
+            dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
             logger.info("Create hdfs folder successful.");
         }catch (IOException e){
             logger.error("HDFS folder create fail due to: " + e.getLocalizedMessage());
@@ -130,6 +133,15 @@ public class HDFSAdminService implements OCDPAdminService{
         logger.info("Unassign read/write/execute permission to hdfs folder.");
         rangerClient rc = rangerConfig.getRangerClient();
         return rc.removePolicy(policyId);
+    }
+
+    private Map<String, Long> getQuotaFromPlan(){
+        return new HashMap<String, Long>(){
+            {
+                put("nameSpaceQuota", new Long(1000));
+                put("storageSpaceQuota", new Long(10000000));
+            }
+        };
     }
 
 }
