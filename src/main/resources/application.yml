@@ -1,28 +1,28 @@
 ocdp:
   security:
-      username: ocdp
-      password: Passw0rd
+      username: username
+      password: password
   etcd:
-     endpoint: http://103.235.243.145:2379
+     endpoint: etcdEndpoint
   ldap:
-      url: ldap://ochadoop06.jcloud.local
-      userDN: cn=root,dc=asiainfo,dc=com
-      password: Passw0rd
-      base: dc=asiainfo,dc=com
+      url: ldapServerURL
+      userDN: userdn
+      password: password
+      base: base
   krb:
-      kdcHost: ochadoop06.jcloud.local
-      user-principal: admin/admin@ASIAINFO.COM
-      keytab-location: /tmp/admin.keytab
-      adminPwd: Passw0rd
-      realm: ASIAINFO.COM
+      kdcHost: kdcHost
+      user-principal: krbUserPrincipal
+      keytab-location: krbAdminKeytab
+      adminPwd: password
+      realm: realm
   ranger:
-      rangerUri: http://ocdpbroker.jcloud.local:6080
+      rangerUri: rangerUri
       rangerUser: admin
       rangerPwd: admin
   hdfs:
-      hdfsSuperUser: hdfs-OCDP@ASIAINFO.COM
-      userKeytab: /tmp/hdfs.keytab
-      krbFilePath: /etc/krb5.conf
-      hdfsURL: hdfs://ocdpbroker.jcloud.local
+      hdfsSuperUser: hdfsSuperUserPrincipal
+      userKeytab: userKeytab
+      krbFilePath: krb5File
+      hdfsURL: hdfsURL
 
 

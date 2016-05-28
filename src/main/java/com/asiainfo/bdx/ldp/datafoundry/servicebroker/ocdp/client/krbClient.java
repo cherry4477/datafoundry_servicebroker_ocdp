@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.ShellCommandUtil;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.directory.server.kerberos.shared.crypto.encryption.KerberosKeyFactory;
 import org.apache.directory.server.kerberos.shared.keytab.Keytab;
@@ -53,12 +53,12 @@ public class krbClient {
     private String kdcHost;
     private String realm;
 
-    public krbClient(krbConfig krbConfig){
-        this.userPrincipal = krbConfig.getUserPrincipal();
-        this.keytabLocation = krbConfig.getKeytabLocation();
-        this.adminPwd = krbConfig.getAdminPwd();
-        this.kdcHost = krbConfig.getKdcHost();
-        this.realm = krbConfig.getRealm();
+    public krbClient(ClusterConfig clusterConfig){
+        this.userPrincipal = clusterConfig.getKrbUserPrincipal();
+        this.keytabLocation = clusterConfig.getKrbKeytabLocation();
+        this.adminPwd = clusterConfig.getKrbAdminPwd();
+        this.kdcHost = clusterConfig.getKrbKdcHost();
+        this.realm = clusterConfig.getKrbRealm();
     }
 
     /**

@@ -1,19 +1,18 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.io.IOException;
 import java.util.*;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstanceBinding;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceBindingRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
@@ -50,10 +49,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
     private ApplicationContext context;
 
     @Autowired
-    private ldapConfig ldapConfig;
-
-    @Autowired
-    public krbConfig krbConfig;
+    private ClusterConfig clusterConfig;
 
     public OCDPServiceInstanceBindingService() {}
 
@@ -77,7 +73,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
+        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
         try{
             this.createLDAPUser(ldap, accountName);
@@ -89,7 +85,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
         // Create kerberos principal for OCDP service instance binding
         logger.info("create service binding kerberos principal.");
-        krbClient kc = new krbClient(this.krbConfig);
+        krbClient kc = new krbClient(this.clusterConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
         String keyTabString;
@@ -212,7 +208,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Delete kerberos principal for OCDP service instance binding
         logger.info("Delete service binding kerberos principal.");
-        krbClient kc = new krbClient(this.krbConfig);
+        krbClient kc = new krbClient(this.clusterConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
         }catch(KerberosOperationException e){
@@ -222,7 +218,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Delete LDAP user for OCDP service instance binding
         logger.info("Delete service binding ldap user.");
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
+        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         try{
             this.removeLDAPUser(ldap, accountName);
         }catch (Exception e){

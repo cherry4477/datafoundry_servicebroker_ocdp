@@ -1,6 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.impl;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.EtcdConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,13 +27,14 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
     private etcdClient etcdClient;
 
     @Autowired
-    public OCDPServiceInstanceRepositoryImpl(EtcdConfig etcdCfg){
-        this.etcdClient = etcdCfg.getEtcdClient();
+    public OCDPServiceInstanceRepositoryImpl(ClusterConfig clusterConfig){
+        this.etcdClient = clusterConfig.getEtcdClient();
     }
 
     @Override
     public ServiceInstance findOne(String serviceInstanceId) {
         logger.info("find one OCDPServiceInstance: " + serviceInstanceId);
+
         if(etcdClient.read("/servicebroker/ocdp/instance/" + serviceInstanceId) == null){
             return null;
         }

@@ -65,11 +65,11 @@ task buildDocker(type: Docker, dependsOn: build) {
             into stageDir
         }
         copy {
-            from "src/main/docker/config/krb5.conf"
+            from "src/main/docker/krb5.conf"
             into stageDir
         }
         copy {
-            from "src/main/docker/config/hdfs.keytab"
+            from "src/main/docker/hdfs.keytab"
             into stageDir
         }
     }

@@ -1,6 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,11 +14,8 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 @EnableGlobalMethodSecurity(securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${ocdp.security.username}")
-    private String username;
-
-    @Value("${ocdp.security.password}")
-    private String password;
+    @Autowired
+    private Environment environment;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -33,7 +30,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        String username = environment.getProperty("BROKER_USERNAME");
+        String password = environment.getProperty("BROKER_PASSWORD");
         auth.inMemoryAuthentication()
-                .withUser(this.username).password(this.password).roles("USER");
+                .withUser(username).password(password).roles("USER");
     }
 }

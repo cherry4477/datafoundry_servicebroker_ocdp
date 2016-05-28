@@ -1,6 +1,5 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.io.IOException;
 import java.lang.Thread;
 import java.util.ArrayList;
 import java.util.Map;
@@ -12,6 +11,7 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
 
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest;
@@ -29,13 +29,13 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.krbConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ldapConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.ldap.support.LdapNameBuilder;
@@ -61,10 +61,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     private ApplicationContext context;
 
     @Autowired
-    private ldapConfig ldapConfig;
-
-    @Autowired
-    public krbConfig krbConfig;
+    private ClusterConfig clusterConfig;
 
     public OCDPServiceInstanceService() {}
 
@@ -88,7 +85,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
+        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         String accountName = "serviceInstance_" + UUID.randomUUID().toString();
         try{
             this.createLDAPUser(ldap, accountName);
@@ -100,7 +97,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         //Create Kerberos principal for new LDAP user
         logger.info("create kerberos principal.");
-        krbClient kc = new krbClient(this.krbConfig);
+        krbClient kc = new krbClient(this.clusterConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
         try{
@@ -227,7 +224,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
         // Delete Kerberos principal for new LDAP user
         logger.info("Delete kerberos principal.");
-        krbClient kc = new krbClient(this.krbConfig);
+        krbClient kc = new krbClient(this.clusterConfig);
         try{
             kc.removePrincipal(accountName +  "@ASIAINFO.COM");
         }catch(KerberosOperationException e){
@@ -237,7 +234,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
         // Delete LDAP user for service instance
         logger.info("Delete ldap user.");
-        LdapTemplate ldap = this.ldapConfig.getLdapTemplate();
+        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         try{
             this.removeLDAPUser(ldap, accountName);
         }catch (Exception e){

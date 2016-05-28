@@ -6,11 +6,10 @@ import java.util.List;
 import java.io.IOException;
 import java.net.URI;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.hdfsConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.rangerConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 
 import org.apache.hadoop.fs.Path;
@@ -37,21 +36,19 @@ public class HDFSAdminService implements OCDPAdminService{
             FsAction.NONE);
 
     @Autowired
-    public hdfsConfig hdfsConfig;
-
-    @Autowired
-    public rangerConfig rangerConfig;
+    private ClusterConfig clusterConfig;
 
     @Override
     public void authentication() throws Exception{
         Configuration conf = new Configuration();
         conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.hdfsConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.hdfsConfig.getUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
+        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
+        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
+        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
         try{
-            UserGroupInformation.loginUserFromKeytab(this.hdfsConfig.getHdfsSuperUser(), this.hdfsConfig.getUserKeytab());
+            UserGroupInformation.loginUserFromKeytab(
+                    this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -66,14 +63,14 @@ public class HDFSAdminService implements OCDPAdminService{
         }
         Configuration conf = new Configuration();
         conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.hdfsConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.hdfsConfig.getUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
+        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
+        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
+        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
         String pathName;
         DistributedFileSystem dfs = new DistributedFileSystem();
         try{
-            dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
+            dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), conf);
             if(bindingId == null){
                 pathName = "/servicebroker/" + serviceInstanceId;
                 dfs.mkdirs(new Path(pathName), FS_PERMISSION);
@@ -96,7 +93,7 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                               List<String> userList, List<String> permList){
-        rangerClient rc = rangerConfig.getRangerClient();
+        rangerClient rc = clusterConfig.getRangerClient();
         return rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
                 "OCDP_hadoop", "hdfs", groupList, userList, permList);
     }
@@ -110,13 +107,13 @@ public class HDFSAdminService implements OCDPAdminService{
         }
         Configuration conf = new Configuration();
         conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.hdfsConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.hdfsConfig.getUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.hdfsConfig.getKrbFilePath());
+        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
+        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
+        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
         UserGroupInformation.setConfiguration(conf);
         DistributedFileSystem dfs = new DistributedFileSystem();
         try{
-            dfs.initialize(URI.create(this.hdfsConfig.getHdfsURL()), conf);
+            dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), conf);
             dfs.delete(new Path(serviceInstanceResuorceName));
             logger.info("Delete hdfs folder successful.");
         }catch (Exception e){
@@ -129,7 +126,7 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hdfs folder.");
-        rangerClient rc = rangerConfig.getRangerClient();
+        rangerClient rc = clusterConfig.getRangerClient();
         return rc.removePolicy(policyId);
     }
 
