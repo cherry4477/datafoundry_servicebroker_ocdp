@@ -19,6 +19,7 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export LDAP_USER_DN=<root userdn>
      export LDAP_PASSWORD=<password>
      export LDAP_BASE=<base dn>
+     export LDAP_GROUP=<LDAP group name>
 
      export KRB_KDC_HOST=<KDC hostname>
      export KRB_USER_PRINCIPAL=<admin user principal>

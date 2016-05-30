@@ -76,7 +76,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
         try{
-            this.createLDAPUser(ldap, accountName);
+            this.createLDAPUser(ldap, accountName, clusterConfig.getLdapGroup());
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -242,16 +242,15 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 		return bindingRepository.findOne(serviceInstanceId, bindingId);
 	}
 
-    private void createLDAPUser(LdapTemplate ldap, String accountName){
+    private void createLDAPUser(LdapTemplate ldap, String accountName, String groupName){
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", accountName)
+                .add("uid", accountName)
                 .build();
         Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("sn", accountName);
+        userAttributes.put("memberOf", "cn=" + groupName + ",ou=Group,dc=asiainfo,dc=com");
         BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("top");
-        classAttribute.add("person");
+        classAttribute.add("account");
         userAttributes.put(classAttribute);
         ldap.bind(ldapName, null, userAttributes);
     }
@@ -259,7 +258,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
     private void removeLDAPUser(LdapTemplate ldap, String accountName){
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("cn", accountName)
+                .add("uid", accountName)
                 .build();
         ldap.unbind(ldapName);
     }

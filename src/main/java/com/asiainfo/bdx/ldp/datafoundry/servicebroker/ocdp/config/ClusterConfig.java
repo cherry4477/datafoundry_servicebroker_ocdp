@@ -29,6 +29,8 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String ldap_base;
 
+    private String ldap_group;
+
     // Kerberos connectivity properties
     private String krb_kdcHost;
 
@@ -63,6 +65,7 @@ public class ClusterConfig implements EnvironmentAware{
         this.ldap_userDN = env.getProperty("LDAP_USER_DN");
         this.ldap_password = env.getProperty("LDAP_PASSWORD");
         this.ldap_base = env.getProperty("LDAP_BASE");
+        this.ldap_group = env.getProperty("LDAP_GROUP");
         this.krb_kdcHost = env.getProperty("KRB_KDC_HOST");
         this.krb_userPrincipal = env.getProperty("KRB_USER_PRINCIPAL");
         this.krb_keytabLocation = env.getProperty("KRB_KEYTAB_LOCATION");
@@ -83,6 +86,7 @@ public class ClusterConfig implements EnvironmentAware{
     public String getLdapUserDN() { return this.ldap_userDN; }
     public String getLdapPassword() { return this.ldap_password; }
     public String getLdapBase() { return this.ldap_base; }
+    public String getLdapGroup() { return this.ldap_group; }
 
     public String getKrbKdcHost() { return this.krb_kdcHost; }
     public String getKrbUserPrincipal() { return this.krb_userPrincipal; }
