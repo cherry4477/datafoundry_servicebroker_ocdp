@@ -13,7 +13,10 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export BROKER_USERNAME=<broker username>
      export BROKER_PASSWORD=<broker password>
 
-     export ETCD_ENDPOINT=<etcd endpoint>
+     export ETCD_HOST=<etcd host>
+     export ETCD_PORT=<etcd port>
+     export ETCD_USER=<etcd user>
+     export ETCD_PWD=<etcd password>
 
      export LDAP_URL=<LDAP server URL>
      export LDAP_USER_DN=<root userdn>
@@ -26,6 +29,8 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export KRB_KEYTAB_LOCATION=<admin user keytab file path>
      export KRB_ADMIN_PASSWORD=<admin user password>>
      export KRB_REALM=<kerberos realm>
+
+     export CLUSTER_NAME=<Hadoop cluster name>
 
      export RANGER_URL=<Ranger server URL>
      export RANGER_ADMIN_USER=<Ranger admin user name>

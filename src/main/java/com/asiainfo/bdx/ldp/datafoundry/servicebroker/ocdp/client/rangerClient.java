@@ -1,6 +1,5 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
-import java.io.InputStream;
 import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -46,9 +45,15 @@ public class rangerClient {
     static final Gson gson = new GsonBuilder().create();
 
     public rangerClient(String uri, String username, String password){
+
+        if(! uri.endsWith("/")){
+            uri += "/";
+        }
+        this.baseUri = URI.create(uri);
+
         this.httpClient = HttpClientBuilder.create().build();
 
-        HttpHost targetHost = new HttpHost("ocdpbroker.jcloud.local", 6080, "http");
+        HttpHost targetHost = new HttpHost(this.baseUri.getHost(), 6080, "http");
         CredentialsProvider provider = new BasicCredentialsProvider();
         provider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
                 new UsernamePasswordCredentials(username, password));
@@ -58,11 +63,6 @@ public class rangerClient {
         context.setCredentialsProvider(provider);
         context.setAuthCache(authCache);
         this.context = context;
-
-        if(! uri.endsWith("/")){
-            uri += "/";
-        }
-        this.baseUri = URI.create(uri);
     }
 
     public RangerPolicy getPolicy(String policyID){
