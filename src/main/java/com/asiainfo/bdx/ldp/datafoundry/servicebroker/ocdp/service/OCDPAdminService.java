@@ -16,8 +16,7 @@ public interface OCDPAdminService {
 
 	String provisionResources(String serviceInstanceId, String bindingId) throws Exception;
 
-    boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
-                                       List<String> userList, List<String> permList);
+    boolean assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName);
 
     void deprovisionResources(String serviceInstanceResuorceName) throws Exception;
 
