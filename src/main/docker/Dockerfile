@@ -7,8 +7,6 @@ RUN yum update && \
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk/
 
-#COPY hosts /tmp/hosts
-
 COPY krb5.conf /etc/krb5.conf
 
 COPY hdfs.keytab /tmp/hdfs.keytab
