@@ -35,17 +35,33 @@ public class HDFSAdminService implements OCDPAdminService{
     private static final FsPermission FS_USER_PERMISSION = new FsPermission(FsAction.ALL, FsAction.NONE,
             FsAction.NONE);
 
-    @Autowired
     private ClusterConfig clusterConfig;
+
+    private rangerClient rc;
+
+    private DistributedFileSystem dfs;
+
+    private Configuration conf;
+
+    @Autowired
+    public HDFSAdminService(ClusterConfig clusterConfig){
+        this.clusterConfig = clusterConfig;
+
+        this.rc = clusterConfig.getRangerClient();
+
+        this.dfs = new DistributedFileSystem();
+
+        this.conf = new Configuration();
+        conf.set("hadoop.security.authentication", "Kerberos");
+        conf.set("hdfs.kerberos.principal", clusterConfig.getHdfsSuperUser());
+        conf.set("hdfs.keytab.file", clusterConfig.getHdfsUserKeytab());
+
+        System.setProperty("java.security.krb5.conf", clusterConfig.getHdfsKrbFilePath());
+    }
 
     @Override
     public void authentication() throws Exception{
-        Configuration conf = new Configuration();
-        conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
-        UserGroupInformation.setConfiguration(conf);
+        UserGroupInformation.setConfiguration(this.conf);
         try{
             UserGroupInformation.loginUserFromKeytab(
                     this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
@@ -56,36 +72,27 @@ public class HDFSAdminService implements OCDPAdminService{
 
     @Override
     public String provisionResources(String serviceInstanceId, String bindingId) throws Exception{
+        String pathName;
         try{
             this.authentication();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        Configuration conf = new Configuration();
-        conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
-        UserGroupInformation.setConfiguration(conf);
-        String pathName;
-        DistributedFileSystem dfs = new DistributedFileSystem();
-        try{
-            dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), conf);
+            this.dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), this.conf);
             if(bindingId == null){
                 pathName = "/servicebroker/" + serviceInstanceId;
-                dfs.mkdirs(new Path(pathName), FS_PERMISSION);
+                this.dfs.mkdirs(new Path(pathName), FS_PERMISSION);
                 // Only hdfs folder for service instance need set name/storage space quota
                 Map<String, Long> quota = this.getQuotaFromPlan();
-                dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
+                this.dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
             }else {
                 pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
-                dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
+                this.dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
             }
             logger.info("Create hdfs folder successful.");
         }catch (Exception e){
             logger.error("HDFS folder create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw e;
+        } finally {
+            this.dfs.close();
         }
         return pathName;
     }
@@ -93,41 +100,31 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
                                               List<String> userList, List<String> permList){
-        rangerClient rc = clusterConfig.getRangerClient();
-        return rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
-                "OCDP_hadoop", "hdfs", groupList, userList, permList);
+        logger.info("Assign read/write/execute permission to hdfs folder.");
+        return this.rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
+                this.clusterConfig.getClusterName() + "_hadoop", "hdfs", groupList, userList, permList);
     }
 
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName) throws Exception{
         try{
             this.authentication();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        Configuration conf = new Configuration();
-        conf.set("hadoop.security.authentication", "Kerberos");
-        conf.set("hdfs.kerberos.principal", this.clusterConfig.getHdfsSuperUser());
-        conf.set("hdfs.keytab.file", this.clusterConfig.getHdfsUserKeytab());
-        System.setProperty("java.security.krb5.conf", this.clusterConfig.getHdfsKrbFilePath());
-        UserGroupInformation.setConfiguration(conf);
-        DistributedFileSystem dfs = new DistributedFileSystem();
-        try{
-            dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), conf);
-            dfs.delete(new Path(serviceInstanceResuorceName));
+            this.dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), this.conf);
+            this.dfs.delete(new Path(serviceInstanceResuorceName));
             logger.info("Delete hdfs folder successful.");
         }catch (Exception e){
             logger.error("HDFS folder delete fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw e;
+        } finally {
+            this.dfs.close();
         }
     }
 
     @Override
     public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hdfs folder.");
-        rangerClient rc = clusterConfig.getRangerClient();
-        return rc.removePolicy(policyId);
+        return this.rc.removePolicy(policyId);
     }
 
     private Map<String, Long> getQuotaFromPlan(){

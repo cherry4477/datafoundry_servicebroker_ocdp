@@ -16,8 +16,9 @@ public class etcdClient {
 
     private EtcdClient etcdclient;
 
-    public etcdClient(String etcd_endpoint){
-        this.etcdclient = new EtcdClient(URI.create(etcd_endpoint));
+    public etcdClient(String etcd_host, String etcd_port, String etcd_user, String etcd_password){
+        this.etcdclient = new EtcdClient(URI.create(
+                "http://" +  etcd_user + ":" + etcd_password + "@" + etcd_host + ":" + etcd_port));
     }
 
     public EtcdResult read(String key){

@@ -12,7 +12,6 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceBindingRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
@@ -48,10 +47,18 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
     @Autowired
     private ApplicationContext context;
 
-    @Autowired
     private ClusterConfig clusterConfig;
 
-    public OCDPServiceInstanceBindingService() {}
+    private LdapTemplate ldap;
+
+    private krbClient kc;
+
+    @Autowired
+    public OCDPServiceInstanceBindingService(ClusterConfig clusterConfig) {
+        this.clusterConfig = clusterConfig;
+        this.ldap = clusterConfig.getLdapTemplate();
+        this.kc = new krbClient(clusterConfig);
+    }
 
     private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
         return  (OCDPAdminService) this.context.getBean(
@@ -73,10 +80,9 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
-        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         String accountName = "serviceBinding_" + UUID.randomUUID().toString();
         try{
-            this.createLDAPUser(ldap, accountName, clusterConfig.getLdapGroup());
+            this.createLDAPUser(accountName, clusterConfig.getLdapGroup());
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -85,19 +91,18 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
         // Create kerberos principal for OCDP service instance binding
         logger.info("create service binding kerberos principal.");
-        krbClient kc = new krbClient(this.clusterConfig);
         String pn = accountName +  "@ASIAINFO.COM";
         String pwd = UUID.randomUUID().toString();
         String keyTabString;
         try{
-            kc.createPrincipal(pn, pwd);
-            keyTabString = kc.createKeyTabString(pn, pwd, null);
+            this.kc.createPrincipal(pn, pwd);
+            keyTabString = this.kc.createKeyTabString(pn, pwd, null);
         }catch(KerberosOperationException e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(ldap, accountName);
+                this.removeLDAPUser(accountName);
             }catch(Exception ex){
                 ex.printStackTrace();
             }
@@ -112,13 +117,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(ldap, accountName);
+                this.removeLDAPUser(accountName);
             }catch(Exception ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
-                kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+                this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
             }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
@@ -132,8 +137,8 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String policyName = UUID.randomUUID().toString();
         boolean policyCreateResult = false;
         int i = 0;
+        logger.info("Try to create ranger policy...");
         while(i++ <= 20){
-            logger.info("Try to create ranger policy...");
             policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource,
                     groupList, userList, permList);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
@@ -158,13 +163,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(ldap, accountName);
+                this.removeLDAPUser(accountName);
             }catch(Exception ex){
                 ex.printStackTrace();
             }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
-                kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+                this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
             }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
@@ -208,9 +213,8 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Delete kerberos principal for OCDP service instance binding
         logger.info("Delete service binding kerberos principal.");
-        krbClient kc = new krbClient(this.clusterConfig);
         try{
-            kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+            this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
         }catch(KerberosOperationException e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -218,9 +222,8 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Delete LDAP user for OCDP service instance binding
         logger.info("Delete service binding ldap user.");
-        LdapTemplate ldap = this.clusterConfig.getLdapTemplate();
         try{
-            this.removeLDAPUser(ldap, accountName);
+            this.removeLDAPUser(accountName);
         }catch (Exception e){
             logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -242,7 +245,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 		return bindingRepository.findOne(serviceInstanceId, bindingId);
 	}
 
-    private void createLDAPUser(LdapTemplate ldap, String accountName, String groupName){
+    private void createLDAPUser(String accountName, String groupName){
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
                 .add("uid", accountName)
@@ -252,15 +255,15 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         BasicAttribute classAttribute = new BasicAttribute("objectClass");
         classAttribute.add("account");
         userAttributes.put(classAttribute);
-        ldap.bind(ldapName, null, userAttributes);
+        this.ldap.bind(ldapName, null, userAttributes);
     }
 
-    private void removeLDAPUser(LdapTemplate ldap, String accountName){
+    private void removeLDAPUser(String accountName){
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
                 .add("uid", accountName)
                 .build();
-        ldap.unbind(ldapName);
+        this.ldap.unbind(ldapName);
     }
 
 }

@@ -18,7 +18,13 @@ import org.springframework.ldap.core.support.LdapContextSource;
 public class ClusterConfig implements EnvironmentAware{
 
     // Etcd connectivity properties
-    private String etcd_endpoint;
+    private String etcd_host;
+
+    private String etcd_port;
+
+    private String etcd_user;
+
+    private String etcd_pwd;
 
     // LDAP connectivity properties
     private String ldap_url;
@@ -42,6 +48,9 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String krb_realm;
 
+    // Hadoop cluster name
+    private String cluster_name;
+
     // Hadoop Ranger connectivity properties
     private String ranger_uri;
 
@@ -60,7 +69,10 @@ public class ClusterConfig implements EnvironmentAware{
 
     @Override
     public void setEnvironment(Environment env){
-        this.etcd_endpoint = env.getProperty("ETCD_ENDPOINT");
+        this.etcd_host = env.getProperty("ETCD_HOST");
+        this.etcd_port = env.getProperty("ETCD_PORT");
+        this.etcd_user = env.getProperty("ETCD_USER");
+        this.etcd_pwd = env.getProperty("ETCD_PWD");
         this.ldap_url = env.getProperty("LDAP_URL");
         this.ldap_userDN = env.getProperty("LDAP_USER_DN");
         this.ldap_password = env.getProperty("LDAP_PASSWORD");
@@ -71,6 +83,7 @@ public class ClusterConfig implements EnvironmentAware{
         this.krb_keytabLocation = env.getProperty("KRB_KEYTAB_LOCATION");
         this.krb_adminPwd = env.getProperty("KRB_ADMIN_PASSWORD");
         this.krb_realm = env.getProperty("KRB_REALM");
+        this.cluster_name = env.getProperty("CLUSTER_NAME");
         this.ranger_uri = env.getProperty("RANGER_URL");
         this.ranger_user = env.getProperty("RANGER_ADMIN_USER");
         this.ranger_pwd = env.getProperty("RANGER_ADMIN_PASSWORD");
@@ -80,7 +93,10 @@ public class ClusterConfig implements EnvironmentAware{
         this.hdfs_krbFilePath = env.getProperty("HDFS_KRB_FILE");
     }
 
-    public String getEtcdEndpoint() { return this.etcd_endpoint; }
+    public String getEtcdHost() { return this.etcd_host; }
+    public String getEtcdPort() { return this.etcd_port; }
+    public String getEtcdUser() { return this.etcd_user; }
+    public String getEtcd_pwd() { return this.etcd_pwd; }
 
     public String getLdapUrl() { return this.ldap_url; }
     public String getLdapUserDN() { return this.ldap_userDN; }
@@ -94,6 +110,7 @@ public class ClusterConfig implements EnvironmentAware{
     public String getKrbAdminPwd() { return this.krb_adminPwd; }
     public String getKrbRealm() { return this.krb_realm; }
 
+    public String getClusterName() { return this.cluster_name; }
     public String getRangerUri() { return this.ranger_uri; }
     public String getRangerUser() { return this.ranger_user; }
     public String getRangerPwd() { return this.ranger_pwd; }
@@ -104,7 +121,7 @@ public class ClusterConfig implements EnvironmentAware{
     public String getHdfsKrbFilePath() {return this.hdfs_krbFilePath; }
 
     public etcdClient getEtcdClient(){
-        return new etcdClient(this.etcd_endpoint);
+        return new etcdClient(this.etcd_host, this.etcd_port, this.etcd_user, this.etcd_pwd);
     }
 
     @Bean
