@@ -17,6 +17,9 @@ public class RangerPolicy {
     @JsonProperty("policyName")
     private String policyName;
 
+    @JsonSerialize
+    @JsonProperty("id")
+    private String id;
 
     @JsonSerialize
     @JsonProperty("resourceName")
@@ -56,10 +59,11 @@ public class RangerPolicy {
     @JsonProperty("permMapList")
     private List<Permission> permMapList;
 
-    public RangerPolicy(String policyName, String resourceName, String description,
+    public RangerPolicy(String policyName, String id, String resourceName, String description,
                         String repositoryName, String repositoryType, boolean isEnabled,
                         boolean isRecursive, boolean isAuditEnabled){
         this.policyName = policyName;
+        this.id = id;
         this.resourceName = resourceName;
         this.description = description;
         this.repositoryName = repositoryName;
@@ -78,10 +82,11 @@ public class RangerPolicy {
         this.permMapList.add(p);
     }
 
-    private String getPolicyName(){ return policyName; }
-    private String getResourceName(){ return resourceName; }
-    private String getDescription(){ return description; }
-    private String getRepoName(){ return repositoryName; }
-    private String getRepoType(){ return repositoryType; }
-    private List<Permission> getPermMapList(){ return permMapList; }
+    public String getPolicyName(){ return policyName; }
+    public String getPolicyId() { return id; }
+    public String getResourceName(){ return resourceName; }
+    public String getDescription(){ return description; }
+    public String getRepoName(){ return repositoryName; }
+    public String getRepoType(){ return repositoryType; }
+    public List<Permission> getPermMapList(){ return permMapList; }
 }

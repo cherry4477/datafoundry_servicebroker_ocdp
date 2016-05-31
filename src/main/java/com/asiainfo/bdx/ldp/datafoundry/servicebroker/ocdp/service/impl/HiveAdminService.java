@@ -26,9 +26,10 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     @Override
-    public boolean assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hive table.");
-        return true;
+        String policyId = "";
+        return policyId;
     }
 
     @Override

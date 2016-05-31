@@ -42,8 +42,8 @@ public class ServiceInstance {
 	private String dashboardUrl;
 
 	@JsonSerialize
-    @JsonProperty("ServiceInstanceMetadata")
-    private Map<String, String> ServiceInstanceMetadata;
+    @JsonProperty("ServiceInstanceCredentials")
+    private Map<String, String> ServiceInstanceCredentials;
 
 	@SuppressWarnings("unused")
 	private ServiceInstance() {}
@@ -119,10 +119,10 @@ public class ServiceInstance {
 		return dashboardUrl;
 	}
 
-    public Map<String, String> getServiceInstanceMetadata() { return ServiceInstanceMetadata; }
+    public Map<String, String> getServiceInstanceCredentials() { return ServiceInstanceCredentials; }
 
-    public void setCredential(Map<String, String> ServiceInstanceMetadata) {
-        this.ServiceInstanceMetadata = ServiceInstanceMetadata;
+    public void setCredential(Map<String, String> ServiceInstanceCredentials) {
+        this.ServiceInstanceCredentials = ServiceInstanceCredentials;
     }
 
 	public ServiceInstance and() {
