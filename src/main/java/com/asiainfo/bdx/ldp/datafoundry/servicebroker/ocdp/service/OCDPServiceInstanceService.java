@@ -87,13 +87,15 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
         instance = new ServiceInstance(request);
 
+        String ldapGroupName = this.clusterConfig.getLdapGroup();
+        String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
         String accountName = "serviceInstance_" + UUID.randomUUID().toString();
         try{
-            this.createLDAPUser(accountName, this.clusterConfig.getLdapGroup());
+            this.createLDAPUser(accountName, ldapGroupName);
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -102,7 +104,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         //Create Kerberos principal for new LDAP user
         logger.info("create kerberos principal.");
-        String pn = accountName +  "@ASIAINFO.COM";
+        String pn = accountName + "@" + krbRealm;
         String pwd = UUID.randomUUID().toString();
         try{
             this.kc.createPrincipal(pn, pwd);
@@ -133,7 +135,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
-                this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+                this.kc.removePrincipal(pn);
             }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
@@ -142,16 +144,12 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         // Set permission by Apache Ranger
         Map<String, String> credentials = new HashMap<String, String>();
-        ArrayList<String> groupList = new ArrayList<String>(){{add("hadoop");}};
-        ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
-        ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         String policyName = UUID.randomUUID().toString();
         boolean policyCreateResult = false;
         int i = 0;
         logger.info("Try to create ranger policy...");
         while(i++ <= 20){
-            policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceResource,
-                    groupList, userList, permList);
+            policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceResource, accountName, ldapGroupName);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
             if (! policyCreateResult){
                 try{
@@ -177,7 +175,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             }
             logger.info("Rollback kerberos principal: " + accountName);
             try{
-                this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+                this.kc.removePrincipal(pn);
             }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
@@ -218,6 +216,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String accountName = Credential.get("serviceInstanceUser");
         String serviceInstanceResource = Credential.get("serviceInstanceResource");
         String policyName = Credential.get("rangerPolicyName");
+        String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Unset permission by Apache Ranger
         boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyName);
@@ -229,7 +228,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         // Delete Kerberos principal for new LDAP user
         logger.info("Delete kerberos principal.");
         try{
-            this.kc.removePrincipal(accountName +  "@ASIAINFO.COM");
+            this.kc.removePrincipal(accountName + "@" + krbRealm);
         }catch(KerberosOperationException e){
             logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();

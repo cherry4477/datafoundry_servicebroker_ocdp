@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
@@ -98,9 +99,11 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public boolean assignPermissionToResources(String policyName, String resourceName, List<String> groupList,
-                                              List<String> userList, List<String> permList){
+    public boolean assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hdfs folder.");
+        ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
+        ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
+        ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
         return this.rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
                 this.clusterConfig.getClusterName() + "_hadoop", "hdfs", groupList, userList, permList);
     }
