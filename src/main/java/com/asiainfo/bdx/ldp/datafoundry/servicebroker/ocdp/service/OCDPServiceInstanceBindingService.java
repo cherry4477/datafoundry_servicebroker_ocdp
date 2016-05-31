@@ -134,13 +134,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Set permission by Apache Ranger
         Map<String, Object> credentials = new HashMap<String, Object>();
         String policyName = UUID.randomUUID().toString();
-        boolean policyCreateResult = false;
+        String policyId = null;
         int i = 0;
         logger.info("Try to create ranger policy...");
         while(i++ <= 20){
-            policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource, accountName, ldapGroupName);
+            policyId = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource, accountName, ldapGroupName);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
-            if (! policyCreateResult){
+            if (policyId == null){
                 try{
                     Thread.sleep(3000);
                 }catch (InterruptedException e){
@@ -153,11 +153,11 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
                 credentials.put("serviceInstanceBingingPwd", pwd);
                 credentials.put("serviceInstanceBindingKeytab", keyTabString);
                 credentials.put("serviceInstanceBingingResource", serviceInstanceBingingResource);
-                credentials.put("rangerPolicyName", policyName);
+                credentials.put("rangerPolicyId", policyId);
                 break;
             }
         }
-        if (! policyCreateResult){
+        if (policyId == null){
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
             try{
@@ -189,9 +189,10 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 	@Override
 	public void deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request)
             throws OCDPServiceException{
-        String serviceId = request.getServiceInstanceId();
+        String serviceDefinitionId = request.getServiceDefinitionId();
+        String serviceInstanceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
-        ServiceInstanceBinding binding = getServiceInstanceBinding(serviceId, bindingId);
+        ServiceInstanceBinding binding = getServiceInstanceBinding(serviceInstanceId, bindingId);
 
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
@@ -200,11 +201,11 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         Map<String, Object> credentials = binding.getCredentials();
         String accountName = (String)credentials.get("serviceInstanceBingingUser");
         String serviceInstanceBingingResource = (String)credentials.get("serviceInstanceBingingResource");
-        String policyName = (String)credentials.get("rangerPolicyName");
+        String policyId = (String)credentials.get("rangerPolicyId");
         String krbRealm = this.clusterConfig.getKrbRealm();
-        OCDPAdminService ocdp = getOCDPAdminService(serviceId);
+        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Unset permission by Apache Ranger
-        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyName);
+        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyId);
         if(!policyDeleteResult)
         {
             logger.error("Ranger policy delete fail.");
@@ -237,7 +238,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
         }
 
-        bindingRepository.delete(serviceId, bindingId);
+        bindingRepository.delete(serviceInstanceId, bindingId);
     }
 
 	protected ServiceInstanceBinding getServiceInstanceBinding(String serviceInstanceId, String bindingId) {

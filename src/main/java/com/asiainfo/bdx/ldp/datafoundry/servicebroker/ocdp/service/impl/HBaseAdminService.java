@@ -20,20 +20,21 @@ public class HBaseAdminService implements OCDPAdminService{
 
     @Override
     public String provisionResources(String serviceInstanceId, String bindingId){
-        logger.info("Create hbase folder successful.");
+        logger.info("Create hbase table successful.");
         String resourceName = "";
         return resourceName;
     }
 
     @Override
-    public boolean assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hbase table.");
-        return true;
+        String policyId = "";
+        return policyId;
     }
 
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName){
-        logger.info("Delete hbase folder successful.");
+        logger.info("Delete hbase table successful.");
     }
 
     @Override

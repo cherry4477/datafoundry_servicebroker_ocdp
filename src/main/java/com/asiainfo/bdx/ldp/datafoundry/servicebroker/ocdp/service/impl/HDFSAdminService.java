@@ -99,7 +99,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public boolean assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hdfs folder.");
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};

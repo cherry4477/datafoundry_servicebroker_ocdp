@@ -82,11 +82,11 @@ public class rangerClient {
         return rp;
     }
 
-    public boolean createPolicy(String policyName, String resourceName, String description,
+    public String createPolicy(String policyName, String resourceName, String description,
                              String repositoryName, String repositoryType, List<String> groupList,
                              List<String> userList, List<String> permList){
-        boolean status = false;
-        RangerPolicy rp = new RangerPolicy(policyName, resourceName, description,
+        String result = null;
+        RangerPolicy rp = new RangerPolicy(policyName, "", resourceName, description,
                 repositoryName, repositoryType, true, true, true);
         rp.addPermToPolicy(groupList, userList, permList);
         String policyDef = gson.toJson(rp);
@@ -97,11 +97,16 @@ public class rangerClient {
         request.setEntity(entity);
         try{
             HttpResponse response = this.httpClient.execute(request, this.context);
-            status = (response.getStatusLine().getStatusCode() == 200);
+            if(response.getStatusLine().getStatusCode() == 200)
+            {
+                String newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
+                RangerPolicy newPolicyObj = gson.fromJson(newPolicyString, RangerPolicy.class);
+                result = newPolicyObj.getPolicyId();
+            }
         }catch (IOException e){
             e.printStackTrace();
         }
-        return status;
+        return result;
     }
 
     public boolean removePolicy(String policyID){
@@ -110,7 +115,7 @@ public class rangerClient {
         HttpDelete request = new HttpDelete(uri);
         try{
             HttpResponse response = this.httpClient.execute(request, this.context);
-            status = (response.getStatusLine().getStatusCode() == 201);
+            status = (response.getStatusLine().getStatusCode() == 204);
         }catch (IOException e){
             e.printStackTrace();
         }

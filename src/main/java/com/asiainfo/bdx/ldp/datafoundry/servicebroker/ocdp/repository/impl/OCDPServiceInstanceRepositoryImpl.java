@@ -46,16 +46,16 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
         ServiceInstance instance = new ServiceInstance(serviceInstanceId, instanceId, planId, orgGuid, spaceGuid,
                 dashboardUrl);
         String serviceInstanceUser = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
-                "/metadata/serviceInstanceUser");
+                "/Credentials/serviceInstanceUser");
         String serviceInstanceResource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
-                "/metadata/serviceInstanceResource");
-        String rangerPolicyName = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
-                "/metadata/rangerPolicyName");
+                "/Credentials/serviceInstanceResource");
+        String rangerPolicyId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
+                "/Credentials/rangerPolicyId");
         Map<String, String> Credential = new HashMap<String, String>() {
             {
                 put("serviceInstanceUser", serviceInstanceUser);
                 put("serviceInstanceResource", serviceInstanceResource);
-                put("rangerPolicyName", rangerPolicyName);
+                put("rangerPolicyId", rangerPolicyId);
             }
         };
         instance.setCredential(Credential);
@@ -74,12 +74,12 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
                 instance.getServiceInstanceId());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/planId",
                 instance.getPlanId());
-        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/metadata/serviceInstanceUser",
-                instance.getServiceInstanceMetadata().get("serviceInstanceUser"));
-        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/metadata/serviceInstanceResource",
-                instance.getServiceInstanceMetadata().get("serviceInstanceResource"));
-        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/metadata/rangerPolicyName",
-                instance.getServiceInstanceMetadata().get("rangerPolicyName"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/serviceInstanceUser",
+                instance.getServiceInstanceCredentials().get("serviceInstanceUser"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/serviceInstanceResource",
+                instance.getServiceInstanceCredentials().get("serviceInstanceResource"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/rangerPolicyId",
+                instance.getServiceInstanceCredentials().get("rangerPolicyId"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/dashboardUrl",
                 instance.getDashboardUrl());
         etcdClient.createDir("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings");

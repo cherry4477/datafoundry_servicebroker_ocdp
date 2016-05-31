@@ -145,13 +145,13 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         // Set permission by Apache Ranger
         Map<String, String> credentials = new HashMap<String, String>();
         String policyName = UUID.randomUUID().toString();
-        boolean policyCreateResult = false;
+        String policyId = null;
         int i = 0;
         logger.info("Try to create ranger policy...");
         while(i++ <= 20){
-            policyCreateResult = ocdp.assignPermissionToResources(policyName, serviceInstanceResource, accountName, ldapGroupName);
+            policyId = ocdp.assignPermissionToResources(policyName, serviceInstanceResource, accountName, ldapGroupName);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
-            if (! policyCreateResult){
+            if (policyId == null){
                 try{
                     Thread.sleep(3000);
                 }catch (InterruptedException e){
@@ -161,11 +161,11 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
                 logger.info("Ranger policy created.");
                 credentials.put("serviceInstanceUser", accountName);
                 credentials.put("serviceInstanceResource", serviceInstanceResource);
-                credentials.put("rangerPolicyName", policyName);
+                credentials.put("rangerPolicyId", policyId);
                 break;
             }
         }
-        if (! policyCreateResult){
+        if (policyId == null){
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
             try{
@@ -212,14 +212,14 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         if (instance == null) {
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
         }
-        Map<String, String> Credential = instance.getServiceInstanceMetadata();
+        Map<String, String> Credential = instance.getServiceInstanceCredentials();
         String accountName = Credential.get("serviceInstanceUser");
         String serviceInstanceResource = Credential.get("serviceInstanceResource");
-        String policyName = Credential.get("rangerPolicyName");
+        String policyId = Credential.get("rangerPolicyId");
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Unset permission by Apache Ranger
-        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyName);
+        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyId);
         if(!policyDeleteResult)
         {
             logger.error("Ranger policy delete fail.");
