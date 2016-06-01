@@ -119,6 +119,10 @@ public class ServiceInstance {
 		return dashboardUrl;
 	}
 
+	public void setDashboardUrl(String dashboardUrl){
+		this.dashboardUrl = dashboardUrl;
+	}
+
     public Map<String, String> getServiceInstanceCredentials() { return ServiceInstanceCredentials; }
 
     public void setCredential(Map<String, String> ServiceInstanceCredentials) {

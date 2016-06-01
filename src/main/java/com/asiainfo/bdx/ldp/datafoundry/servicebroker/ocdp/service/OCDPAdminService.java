@@ -14,12 +14,16 @@ public interface OCDPAdminService {
 
     void authentication() throws Exception;
 
-	String provisionResources(String serviceInstanceId, String bindingId) throws Exception;
+	String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
+                              String bindingId) throws Exception;
 
     String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName);
 
     void deprovisionResources(String serviceInstanceResuorceName) throws Exception;
 
     boolean unassignPermissionFromResources(String policyId);
+
+    String getDashboardUrl();
+
 
 }

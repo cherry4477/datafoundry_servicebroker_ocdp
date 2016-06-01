@@ -72,6 +72,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceDefinitionId = request.getServiceDefinitionId();
 		String bindingId = request.getBindingId();
 		String serviceInstanceId = request.getServiceInstanceId();
+        String planId = request.getPlanId();
         ServiceInstanceBinding binding = bindingRepository.findOne(serviceDefinitionId, bindingId);
         if (binding != null) {
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
@@ -113,7 +114,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Create Hadoop resource like hdfs folder, hbase table ...
         String serviceInstanceBingingResource;
         try{
-            serviceInstanceBingingResource = ocdp.provisionResources(serviceInstanceId, bindingId);
+            serviceInstanceBingingResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, bindingId);
         }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();

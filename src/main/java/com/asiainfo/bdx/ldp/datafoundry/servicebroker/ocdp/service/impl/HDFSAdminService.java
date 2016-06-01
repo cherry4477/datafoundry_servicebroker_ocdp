@@ -3,16 +3,19 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.List;
-import java.io.IOException;
 import java.net.URI;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import org.apache.hadoop.mapred.lib.aggregate.DoubleValueSum;
+import org.springframework.cloud.servicebroker.model.Plan;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 
+import com.google.gson.internal.LinkedTreeMap;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
@@ -35,6 +38,9 @@ public class HDFSAdminService implements OCDPAdminService{
 
     private static final FsPermission FS_USER_PERMISSION = new FsPermission(FsAction.ALL, FsAction.NONE,
             FsAction.NONE);
+
+    @Autowired
+    private ApplicationContext context;
 
     private ClusterConfig clusterConfig;
 
@@ -72,7 +78,7 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String provisionResources(String serviceInstanceId, String bindingId) throws Exception{
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
         String pathName;
         try{
             this.authentication();
@@ -81,7 +87,7 @@ public class HDFSAdminService implements OCDPAdminService{
                 pathName = "/servicebroker/" + serviceInstanceId;
                 this.dfs.mkdirs(new Path(pathName), FS_PERMISSION);
                 // Only hdfs folder for service instance need set name/storage space quota
-                Map<String, Long> quota = this.getQuotaFromPlan();
+                Map<String, Long> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
                 this.dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
             }else {
                 pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
@@ -130,11 +136,23 @@ public class HDFSAdminService implements OCDPAdminService{
         return this.rc.removePolicy(policyId);
     }
 
-    private Map<String, Long> getQuotaFromPlan(){
+    @Override
+    public String getDashboardUrl(){
+        // Todo: should support multi-tent in future, each account can only see HDFS folders which belong to themself.
+        String hdfsNamenodeUrl = this.clusterConfig.getHdfsUrl();
+        return hdfsNamenodeUrl.replace("hdfs", "http") + ":50070";
+    }
+
+    private Map<String, Long> getQuotaFromPlan(String serviceDefinitionId, String planId){
+        CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");
+        Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
+        Map<String, Object> metadata = plan.getMetadata();
+        String nameSpaceQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("Name Space Quota");
+        String storageSpaceQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("Storage Space Quota (GB)");
         return new HashMap<String, Long>(){
             {
-                put("nameSpaceQuota", new Long(1000));
-                put("storageSpaceQuota", new Long(10000000));
+                put("nameSpaceQuota", new Long(nameSpaceQuota));
+                put("storageSpaceQuota", new Long(storageSpaceQuota) * 1000000);
             }
         };
     }
