@@ -19,7 +19,7 @@ public class HBaseAdminService implements OCDPAdminService{
     public void authentication(){ logger.info("HBase auth successful."); }
 
     @Override
-    public String provisionResources(String serviceInstanceId, String bindingId){
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId){
         logger.info("Create hbase table successful.");
         String resourceName = "";
         return resourceName;
@@ -43,4 +43,8 @@ public class HBaseAdminService implements OCDPAdminService{
         return true;
     }
 
+    @Override
+    public String getDashboardUrl(){
+        return "";
+    }
 }

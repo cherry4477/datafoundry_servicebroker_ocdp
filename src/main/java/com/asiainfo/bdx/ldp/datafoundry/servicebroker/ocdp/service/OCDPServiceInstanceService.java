@@ -81,6 +81,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 	public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) throws OCDPServiceException {
         String serviceDefinitionId = request.getServiceDefinitionId();
         String serviceInstanceId = request.getServiceInstanceId();
+        String planId = request.getPlanId();
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance != null) {
             throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
@@ -90,6 +91,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
+        instance.setDashboardUrl(ocdp.getDashboardUrl());
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
@@ -119,11 +121,10 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             }
             throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
         }
-
         // Create Hadoop resource like hdfs folder, hbase table ...
         String serviceInstanceResource;
         try{
-            serviceInstanceResource = ocdp.provisionResources(serviceInstanceId, null);
+            serviceInstanceResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, null);
         }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
