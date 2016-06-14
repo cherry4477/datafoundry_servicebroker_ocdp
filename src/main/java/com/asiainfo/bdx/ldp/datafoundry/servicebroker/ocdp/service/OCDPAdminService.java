@@ -19,11 +19,14 @@ public interface OCDPAdminService {
 
     String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName);
 
+    boolean appendUserToResourcePermission(String policyId, String groupName, String accountName);
+
     void deprovisionResources(String serviceInstanceResuorceName) throws Exception;
 
     boolean unassignPermissionFromResources(String policyId);
 
-    String getDashboardUrl();
+    boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName);
 
+    String getDashboardUrl();
 
 }

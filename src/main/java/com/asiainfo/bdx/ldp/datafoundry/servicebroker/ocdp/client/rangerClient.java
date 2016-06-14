@@ -6,7 +6,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.BaseRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HBaseRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.HttpClient;
@@ -14,6 +16,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.auth.BasicScheme;
@@ -65,31 +68,24 @@ public class rangerClient {
         this.context = context;
     }
 
-    public RangerPolicy getPolicy(String policyID){
-        String policyDef;
-        RangerPolicy rp = null;
+    public String getPolicy(String policyID){
+        String policyDef = null;
         URI uri = buildPolicyUri("service/public/api/policy", policyID, "");
         HttpGet request = new HttpGet(uri);
         try{
             HttpResponse response = this.httpClient.execute(request, this.context);
             if(response.getStatusLine().getStatusCode() == 200){
                 policyDef = EntityUtils.toString(response.getEntity());
-                rp = gson.fromJson(policyDef, RangerPolicy.class);
             }
         }catch (IOException e){
             e.printStackTrace();
         }
-        return rp;
+        return policyDef;
     }
 
-    public String createPolicy(String policyName, String resourceName, String description,
-                             String repositoryName, String repositoryType, List<String> groupList,
-                             List<String> userList, List<String> permList){
-        String result = null;
-        RangerPolicy rp = new RangerPolicy(policyName, "", resourceName, description,
-                repositoryName, repositoryType, true, true, true);
-        rp.addPermToPolicy(groupList, userList, permList);
-        String policyDef = gson.toJson(rp);
+    private String createPolicy(BaseRangerPolicy policy){
+        String newPolicyString = null;
+        String policyDef = gson.toJson(policy);
         URI uri = buildPolicyUri("service/public/api/policy", "", "");
         HttpPost request = new HttpPost(uri);
         StringEntity entity = new StringEntity(policyDef, HTTP.UTF_8);
@@ -99,14 +95,42 @@ public class rangerClient {
             HttpResponse response = this.httpClient.execute(request, this.context);
             if(response.getStatusLine().getStatusCode() == 200)
             {
-                String newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
-                RangerPolicy newPolicyObj = gson.fromJson(newPolicyString, RangerPolicy.class);
-                result = newPolicyObj.getPolicyId();
+                newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
             }
         }catch (IOException e){
             e.printStackTrace();
         }
-        return result;
+        return newPolicyString;
+    }
+
+    public String createHDFSPolicy(String policyName, String resourcePath, String description,
+                                   String repositoryName, String repositoryType, List<String> groupList,
+                                   List<String> userList, List<String> permList){
+        String policyId = null;
+        HDFSRangerPolicy rp = new HDFSRangerPolicy(policyName, "", resourcePath, description,
+                repositoryName, repositoryType, true, true, true);
+        rp.addPermToPolicy(groupList, userList, permList);
+        String newPolicyString = this.createPolicy(rp);
+        if (newPolicyString != null){
+            HDFSRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HDFSRangerPolicy.class);
+            policyId = newPolicyObj.getPolicyId();
+        }
+        return policyId;
+    }
+
+    public String createHBasePolicy(String policyName, String tables, String columnFamilies, String columns,
+                                    String description, String repositoryName, String repositoryType, List<String> groupList,
+                                    List<String> userList, List<String> permList){
+        String policyId = null;
+        HBaseRangerPolicy rp = new HBaseRangerPolicy(policyName, "", tables, columnFamilies, columns,
+                description, repositoryName, repositoryType, true, true, true);
+        rp.addPermToPolicy(groupList, userList, permList);
+        String newPolicyString = this.createPolicy(rp);
+        if (newPolicyString != null){
+            HBaseRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HBaseRangerPolicy.class);
+            policyId = newPolicyObj.getPolicyId();
+        }
+        return policyId;
     }
 
     public boolean removePolicy(String policyID){
@@ -122,7 +146,21 @@ public class rangerClient {
         return status;
     }
 
-    public void updatePolicy(){}
+    public boolean updatePolicy(String policyID, String policyUpdateDef){
+        boolean status = false;
+        URI uri = buildPolicyUri("service/public/api/policy/" + policyID, "", "");
+        HttpPut request = new HttpPut(uri);
+        StringEntity entity = new StringEntity(policyUpdateDef, HTTP.UTF_8);
+        entity.setContentType("application/json");
+        request.setEntity(entity);
+        try{
+            HttpResponse response = this.httpClient.execute(request, this.context);
+            status = (response.getStatusLine().getStatusCode() == 200);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return status;
+    }
 
     private URI buildPolicyUri(String prefix, String key, String suffix) {
         StringBuilder sb = new StringBuilder();

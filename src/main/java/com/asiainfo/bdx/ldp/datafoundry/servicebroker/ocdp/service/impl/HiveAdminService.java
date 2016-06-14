@@ -33,6 +33,12 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     @Override
+    public boolean appendUserToResourcePermission(String policyId, String groupName, String accountName){
+        logger.info("Append user " + accountName + " to hive policy " + policyId);
+        return true;
+    }
+
+    @Override
     public void deprovisionResources(String serviceInstanceResuorceName){
         logger.info("Delete hive table successful.");
     }
@@ -40,6 +46,12 @@ public class HiveAdminService implements OCDPAdminService {
     @Override
     public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hive table.");
+        return true;
+    }
+
+    @Override
+    public boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName){
+        logger.info("Remove user " + accountName + " from hive policy " + policyId);
         return true;
     }
 

@@ -29,6 +29,7 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export KRB_KEYTAB_LOCATION=<admin user keytab file path>
      export KRB_ADMIN_PASSWORD=<admin user password>>
      export KRB_REALM=<kerberos realm>
+     export KRB_KRB5FILEPATH=<krb5.conf file path>
 
      export CLUSTER_NAME=<Hadoop cluster name>
 
@@ -39,7 +40,13 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export HDFS_URL=<HDFS URL>
      export HDFS_SUPER_USER=<HDFS super user principal>
      export HDFS_USER_KEYTAB=<HDFS super user keytab path>
-     export HDFS_KRB_FILE=<krb5.conf file path>
+
+     export HBASE_MASTER_URL=<HBase master UI>
+     export HBASE_MASTER_PRINCIPAL=<HBase super user principal>
+     export HBASE_MASTER_USER_KEYTAB=<HBase super user keytab path>
+     export HBASE_ZOOKEEPER_QUORUM=<Zookeeper hosts list>
+     export HBASE_ZOOKEEPER_CLIENT_PORT=<Zookeeper port>
+     export HBASE_ZOOKEEPER_ZNODE_PARENT=<Zookeeper zNode parent>
 
 ### 2 Run OCDP service broker in VM:
 Build OCDP service broker by gradle command:

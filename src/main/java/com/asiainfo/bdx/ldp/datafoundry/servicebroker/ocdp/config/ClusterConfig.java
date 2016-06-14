@@ -48,11 +48,13 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String krb_realm;
 
+    private String krb_krb5FilePath;
+
     // Hadoop cluster name
     private String cluster_name;
 
     // Hadoop Ranger connectivity properties
-    private String ranger_uri;
+    private String ranger_url;
 
     private String ranger_user;
 
@@ -65,7 +67,18 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String hdfs_userKeytab;
 
-    private String hdfs_krbFilePath;
+    // Hadoop HBase connectivity properties
+    private String hbase_masterUrl;
+
+    private String hbase_masterPrincipal;
+
+    private String hbase_masterUserKeytab;
+
+    private String hbase_zookeeper_quorum;
+
+    private String hbase_zookeeper_clientPort;
+
+    private String hbase_zookeeper_znodeParent;
 
     @Override
     public void setEnvironment(Environment env){
@@ -83,14 +96,20 @@ public class ClusterConfig implements EnvironmentAware{
         this.krb_keytabLocation = env.getProperty("KRB_KEYTAB_LOCATION");
         this.krb_adminPwd = env.getProperty("KRB_ADMIN_PASSWORD");
         this.krb_realm = env.getProperty("KRB_REALM");
+        this.krb_krb5FilePath = env.getProperty("KRB_KRB5FILEPATH");
         this.cluster_name = env.getProperty("CLUSTER_NAME");
-        this.ranger_uri = env.getProperty("RANGER_URL");
+        this.ranger_url = env.getProperty("RANGER_URL");
         this.ranger_user = env.getProperty("RANGER_ADMIN_USER");
         this.ranger_pwd = env.getProperty("RANGER_ADMIN_PASSWORD");
         this.hdfs_url = env.getProperty("HDFS_URL");
         this.hdfs_superUser = env.getProperty("HDFS_SUPER_USER");
         this.hdfs_userKeytab = env.getProperty("HDFS_USER_KEYTAB");
-        this.hdfs_krbFilePath = env.getProperty("HDFS_KRB_FILE");
+        this.hbase_masterUrl = env.getProperty("HBASE_MASTER_URL");
+        this.hbase_masterPrincipal = env.getProperty("HBASE_MASTER_PRINCIPAL");
+        this.hbase_masterUserKeytab = env.getProperty("HBASE_MASTER_USER_KEYTAB");
+        this.hbase_zookeeper_quorum = env.getProperty("HBASE_ZOOKEEPER_QUORUM");
+        this.hbase_zookeeper_clientPort = env.getProperty("HBASE_ZOOKEEPER_CLIENT_PORT");
+        this.hbase_zookeeper_znodeParent = env.getProperty("HBASE_ZOOKEEPER_ZNODE_PARENT");
     }
 
     public String getEtcdHost() { return this.etcd_host; }
@@ -109,16 +128,23 @@ public class ClusterConfig implements EnvironmentAware{
     public String getKrbKeytabLocation() { return this.krb_keytabLocation; }
     public String getKrbAdminPwd() { return this.krb_adminPwd; }
     public String getKrbRealm() { return this.krb_realm; }
+    public String getKrb5FilePath() { return this.krb_krb5FilePath; }
 
     public String getClusterName() { return this.cluster_name; }
-    public String getRangerUri() { return this.ranger_uri; }
+    public String getRangerUrl() { return this.ranger_url; }
     public String getRangerUser() { return this.ranger_user; }
     public String getRangerPwd() { return this.ranger_pwd; }
 
     public String getHdfsUrl() { return this.hdfs_url;}
     public String getHdfsSuperUser() { return this.hdfs_superUser; }
     public String getHdfsUserKeytab() { return this.hdfs_userKeytab; }
-    public String getHdfsKrbFilePath() {return this.hdfs_krbFilePath; }
+
+    public String getHbaseMasterUrl() { return this.hbase_masterUrl; }
+    public String getHbaseMasterPrincipal() { return this.hbase_masterPrincipal; }
+    public String getHbaseMasterUserKeytab() { return this.hbase_masterUserKeytab; }
+    public String getHbaseZookeeperQuorum() { return this.hbase_zookeeper_quorum; }
+    public String getHbaseZookeeperClientPort() { return this.hbase_zookeeper_clientPort; }
+    public String getHbaseZookeeperZnodeParent() { return this.hbase_zookeeper_znodeParent; }
 
     public etcdClient getEtcdClient(){
         return new etcdClient(this.etcd_host, this.etcd_port, this.etcd_user, this.etcd_pwd);
@@ -141,6 +167,6 @@ public class ClusterConfig implements EnvironmentAware{
 
     @Bean
     public rangerClient getRangerClient(){
-        return new rangerClient(this.ranger_uri, this.ranger_user, this.ranger_pwd);
+        return new rangerClient(this.ranger_url, this.ranger_user, this.ranger_pwd);
     }
 }

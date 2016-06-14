@@ -7,6 +7,9 @@ import java.net.URI;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.springframework.cloud.servicebroker.model.Plan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,8 @@ import org.slf4j.LoggerFactory;
 public class HDFSAdminService implements OCDPAdminService{
 
     private Logger logger = LoggerFactory.getLogger(HDFSAdminService.class);
+
+    static final Gson gson = new GsonBuilder().create();
 
     private static final FsPermission FS_PERMISSION = new FsPermission(FsAction.ALL, FsAction.ALL,
             FsAction.NONE);
@@ -62,7 +67,7 @@ public class HDFSAdminService implements OCDPAdminService{
         conf.set("hdfs.kerberos.principal", clusterConfig.getHdfsSuperUser());
         conf.set("hdfs.keytab.file", clusterConfig.getHdfsUserKeytab());
 
-        System.setProperty("java.security.krb5.conf", clusterConfig.getHdfsKrbFilePath());
+        System.setProperty("java.security.krb5.conf", clusterConfig.getKrb5FilePath());
     }
 
     @Override
@@ -109,8 +114,13 @@ public class HDFSAdminService implements OCDPAdminService{
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
-        return this.rc.createPolicy(policyName, resourceName, "Desc: HDFS policy.",
+        return this.rc.createHDFSPolicy(policyName, resourceName, "Desc: HDFS policy.",
                 this.clusterConfig.getClusterName() + "_hadoop", "hdfs", groupList, userList, permList);
+    }
+
+    @Override
+    public boolean appendUserToResourcePermission(String policyId, String groupName, String accountName){
+        return this.updateUserForResourcePermission(policyId, groupName, accountName, true);
     }
 
     @Override
@@ -136,10 +146,27 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
+    public boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName){
+        return this.updateUserForResourcePermission(policyId, groupName, accountName, false);
+    }
+
+    @Override
     public String getDashboardUrl(){
         // Todo: should support multi-tent in future, each account can only see HDFS folders which belong to themself.
         String hdfsNamenodeUrl = this.clusterConfig.getHdfsUrl();
         return hdfsNamenodeUrl.replace("hdfs", "http") + ":50070";
+    }
+
+    private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){
+        String currentPolicy = this.rc.getPolicy(policyId);
+        if (currentPolicy == null)
+        {
+            return false;
+        }
+        HDFSRangerPolicy rp = gson.fromJson(currentPolicy, HDFSRangerPolicy.class);
+        rp.updatePolicyPerm(
+                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("create"); add("admin");}}, isAppend);
+        return this.rc.updatePolicy(policyId, gson.toJson(rp));
     }
 
     private Map<String, Long> getQuotaFromPlan(String serviceDefinitionId, String planId){
