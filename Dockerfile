@@ -11,7 +11,7 @@ WORKDIR /root/servicebroker
 
 COPY src/main/docker/krb5.conf /etc/krb5.conf
 
-COPY src/main/docker/hdfs.keytab /tmp/hdfs.keytab
+COPY src/main/docker/*.keytab /tmp/
 
 RUN git clone https://github.com/asiainfoLDP/datafoundry_servicebroker_ocdp.git && \
     cd datafoundry_servicebroker_ocdp && \
