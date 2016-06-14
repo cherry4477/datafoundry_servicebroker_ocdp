@@ -72,4 +72,4 @@ Build OCDP service broker by gradle command:
 
 Then you can start OCDP service broker container by docker command like below:
 
-    docker run -p <local port>:8080 --add-host <hostname:ip> --env=[<env var list about connectivity properties>] -t asiainfo-ldp/datafoundry-ocdp-service-broker
+    docker run -p <local port>:8080 --add-host <hostname:ip> (host list for ldap/kdc/hadoop) -e <env_name='env_value'> (env list about connectivity properties) -t asiainfo-ldp/datafoundry-ocdp-service-broker
