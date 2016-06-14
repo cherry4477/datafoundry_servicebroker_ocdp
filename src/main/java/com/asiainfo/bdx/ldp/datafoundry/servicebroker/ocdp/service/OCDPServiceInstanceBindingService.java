@@ -8,11 +8,14 @@ import javax.naming.ldap.LdapName;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstanceBinding;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceBindingRepository;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
 
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceAppBindingResponse;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceBindingResponse;
@@ -40,6 +43,9 @@ import org.slf4j.LoggerFactory;
 public class OCDPServiceInstanceBindingService implements ServiceInstanceBindingService {
 
     private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceBindingService.class);
+
+    @Autowired
+    private OCDPServiceInstanceRepository repository;
 
     @Autowired
 	private OCDPServiceInstanceBindingRepository bindingRepository;
@@ -77,13 +83,19 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         if (binding != null) {
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
+        ServiceInstance instance = repository.findOne(serviceInstanceId);
+        if (instance == null) {
+            throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
+        }
+        Map<String, String> serviceInstanceCredentials = instance.getServiceInstanceCredentials();
+        String policyId = serviceInstanceCredentials.get("rangerPolicyId");
 
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
-        String accountName = "serviceBinding_" + UUID.randomUUID().toString();
+        String accountName = "servicebinding_" + UUID.randomUUID().toString();
         try{
             this.createLDAPUser(accountName, ldapGroupName);
         }catch (Exception e){
@@ -111,13 +123,11 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             }
             throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
         }
-        // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceBingingResource;
-        try{
-            serviceInstanceBingingResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, bindingId);
-        }catch (Exception e){
-            logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
+
+        // Add service binding user to ranger policy
+        logger.info("Append user " + accountName + " to ranger policy " + policyId);
+        if (! ocdp.appendUserToResourcePermission(policyId, ldapGroupName, accountName)){
+            logger.error("Fail to Append user " + accountName + " to ranger policy " + policyId);
             logger.info("Rollback LDAP user: " + accountName);
             try{
                 this.removeLDAPUser(accountName);
@@ -130,56 +140,14 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             }catch(KerberosOperationException ex){
                 ex.printStackTrace();
             }
-            throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
+            throw new OCDPServiceException("OCDP service binding fail.");
         }
-        // Set permission by Apache Ranger
         Map<String, Object> credentials = new HashMap<String, Object>();
-        String policyName = UUID.randomUUID().toString();
-        String policyId = null;
-        int i = 0;
-        logger.info("Try to create ranger policy...");
-        while(i++ <= 20){
-            policyId = ocdp.assignPermissionToResources(policyName, serviceInstanceBingingResource, accountName, ldapGroupName);
-            // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
-            if (policyId == null){
-                try{
-                    Thread.sleep(3000);
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-            }else{
-                logger.info("Ranger policy created.");
-                // generate binding credentials
-                credentials.put("serviceInstanceBingingUser", accountName);
-                credentials.put("serviceInstanceBingingPwd", pwd);
-                credentials.put("serviceInstanceBindingKeytab", keyTabString);
-                credentials.put("serviceInstanceBingingResource", serviceInstanceBingingResource);
-                credentials.put("rangerPolicyId", policyId);
-                break;
-            }
-        }
-        if (policyId == null){
-            logger.error("Ranger policy create fail.");
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                this.removeLDAPUser(accountName);
-            }catch(Exception ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback kerberos principal: " + accountName);
-            try{
-                this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback OCDP resource: " + serviceInstanceBingingResource);
-            try{
-                ocdp.deprovisionResources(serviceInstanceBingingResource);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            throw new OCDPServiceException("Ranger policy create fail.");
-        }
+        credentials.put("serviceInstanceBingingUser", accountName);
+        credentials.put("serviceInstanceBingingPwd", pwd);
+        credentials.put("serviceInstanceBindingKeytab", keyTabString);
+        credentials.put("rangerPolicyId", policyId);
+
         binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
 
         bindingRepository.save(binding);
@@ -194,23 +162,22 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceInstanceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
         ServiceInstanceBinding binding = getServiceInstanceBinding(serviceInstanceId, bindingId);
-
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
         }
 
         Map<String, Object> credentials = binding.getCredentials();
         String accountName = (String)credentials.get("serviceInstanceBingingUser");
-        String serviceInstanceBingingResource = (String)credentials.get("serviceInstanceBingingResource");
         String policyId = (String)credentials.get("rangerPolicyId");
+        String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
-        // Unset permission by Apache Ranger
-        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyId);
-        if(!policyDeleteResult)
+        // Remove service binding user from Ranger policy
+        logger.info("Remove user " + accountName + " from ranger policy " + policyId);
+        if (! ocdp.removeUserFromResourcePermission(policyId, ldapGroupName, accountName))
         {
-            logger.error("Ranger policy delete fail.");
-            throw new OCDPServiceException("Ranger policy delete fail.");
+            logger.error("Fail to remove user " + accountName + " to ranger policy " + policyId);
+            throw new OCDPServiceException("Ranger policy update fail.");
         }
         // Delete kerberos principal for OCDP service instance binding
         logger.info("Delete service binding kerberos principal.");
@@ -230,15 +197,6 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             e.printStackTrace();
             throw new OCDPServiceException("Delete LDAP user fail due to: " + e.getLocalizedMessage());
         }
-        // Delete Hadoop resource like hdfs folder, hbase table ...
-        try{
-            ocdp.deprovisionResources(serviceInstanceBingingResource);
-        }catch(Exception e){
-            logger.error("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
-        }
-
         bindingRepository.delete(serviceInstanceId, bindingId);
     }
 

@@ -95,7 +95,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
-        String accountName = "serviceInstance_" + UUID.randomUUID().toString();
+        String accountName = "serviceinstance_" + UUID.randomUUID().toString();
         try{
             this.createLDAPUser(accountName, ldapGroupName);
         }catch (Exception e){

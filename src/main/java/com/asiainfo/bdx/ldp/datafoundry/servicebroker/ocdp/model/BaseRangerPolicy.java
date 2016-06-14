@@ -1,18 +1,18 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Apache Ranger Policy Definition.
- * Created by baikai on 5/17/16.
+ * Created by baikai on 6/13/16.
  */
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class RangerPolicy {
+public class BaseRangerPolicy {
+
     @JsonSerialize
     @JsonProperty("policyName")
     private String policyName;
@@ -20,10 +20,6 @@ public class RangerPolicy {
     @JsonSerialize
     @JsonProperty("id")
     private String id;
-
-    @JsonSerialize
-    @JsonProperty("resourceName")
-    private String resourceName;
 
     @JsonSerialize
     @JsonProperty("description")
@@ -49,22 +45,21 @@ public class RangerPolicy {
     @JsonProperty("isAuditEnabled")
     private boolean isAuditEnabled;
 
+    @JsonSerialize
+    @JsonProperty("permMapList")
+    private List<Permission> permMapList;
+
     private class Permission{
         private List<String> permList = new ArrayList<String>();
         private List<String> userList = new ArrayList<String>();
         private List<String> groupList = new ArrayList<String>();
     }
 
-    @JsonSerialize
-    @JsonProperty("permMapList")
-    private List<Permission> permMapList;
-
-    public RangerPolicy(String policyName, String id, String resourceName, String description,
-                        String repositoryName, String repositoryType, boolean isEnabled,
-                        boolean isRecursive, boolean isAuditEnabled){
+    public BaseRangerPolicy(String policyName, String id, String description,
+                            String repositoryName, String repositoryType, boolean isEnabled,
+                            boolean isRecursive, boolean isAuditEnabled){
         this.policyName = policyName;
         this.id = id;
-        this.resourceName = resourceName;
         this.description = description;
         this.repositoryName = repositoryName;
         this.repositoryType = repositoryType;
@@ -82,11 +77,27 @@ public class RangerPolicy {
         this.permMapList.add(p);
     }
 
+    public void updatePolicyPerm(String groupName, String accountName, List<String> permList, boolean isAppend){
+        // Should reconstruct permMapList here, because ranger returned policy definition like
+        // "permMapList":[{"permList":["Read","Write","Create","Admin"],"userList":["xxx"],"groupList":[]},
+        // {"permList":["Read","Write","Create","Admin"],"userList":[],"groupList":["public"]}]", this format
+        // cannot use to update policy by call ranger rest api.
+        this.permMapList.remove(1);
+        this.permMapList.get(0).groupList.add(groupName);
+        if(isAppend){
+            this.permMapList.get(0).userList.add(accountName);
+        }else{
+            this.permMapList.get(0).userList.remove(accountName);
+        }
+        this.permMapList.get(0).permList.clear();
+        this.permMapList.get(0).permList.addAll(permList);
+    }
+
     public String getPolicyName(){ return policyName; }
     public String getPolicyId() { return id; }
-    public String getResourceName(){ return resourceName; }
     public String getDescription(){ return description; }
     public String getRepoName(){ return repositoryName; }
     public String getRepoType(){ return repositoryType; }
     public List<Permission> getPermMapList(){ return permMapList; }
+
 }
