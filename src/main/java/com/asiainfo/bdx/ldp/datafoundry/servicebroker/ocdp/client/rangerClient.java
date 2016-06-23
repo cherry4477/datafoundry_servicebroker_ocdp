@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.BaseRangerPolicy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HBaseRangerPolicy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerPolicy;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.HttpClient;
@@ -128,6 +129,21 @@ public class rangerClient {
         String newPolicyString = this.createPolicy(rp);
         if (newPolicyString != null){
             HBaseRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HBaseRangerPolicy.class);
+            policyId = newPolicyObj.getPolicyId();
+        }
+        return policyId;
+    }
+
+    public String createHivePolicy(String policyName, String databases, String tables, String columns,
+                                   String description, String repositoryName, String repositoryType, List<String> groupList,
+                                   List<String> userList, List<String> permList){
+        String policyId = null;
+        HiveRangerPolicy rp = new HiveRangerPolicy(policyName, "", databases, tables, columns,
+                description, repositoryName, repositoryType, true, true, true);
+        rp.addPermToPolicy(groupList, userList, permList);
+        String newPolicyString = this.createPolicy(rp);
+        if (newPolicyString != null){
+            HiveRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HiveRangerPolicy.class);
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;

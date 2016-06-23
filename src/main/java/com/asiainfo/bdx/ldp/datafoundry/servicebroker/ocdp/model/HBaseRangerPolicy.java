@@ -11,15 +11,15 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class HBaseRangerPolicy extends BaseRangerPolicy{
 
     @JsonSerialize
-    @JsonProperty("resourcePath")
+    @JsonProperty("tables")
     private String tables;
 
     @JsonSerialize
-    @JsonProperty("resourcePath")
+    @JsonProperty("columnFamilies")
     private String columnFamilies;
 
     @JsonSerialize
-    @JsonProperty("resourcePath")
+    @JsonProperty("columns")
     private String columns;
 
     public HBaseRangerPolicy(String policyName, String id, String tables, String columnFamilies, String columns,
