@@ -48,6 +48,11 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export HBASE_ZOOKEEPER_CLIENT_PORT=<Zookeeper port>
      export HBASE_ZOOKEEPER_ZNODE_PARENT=<Zookeeper zNode parent>
 
+     export HIVE_HOST=<HiveServer2 hostname/ip>
+     export HIVE_PORT=<HiveServer2 port>
+     export HIVE_SUPER_USER=<Hive admin user>
+     export HIVE_SUPER_USER_KEYTAB=<Hive admin user keytab>
+
 ### 2 Run OCDP service broker in VM:
 Build OCDP service broker by gradle command:
 
