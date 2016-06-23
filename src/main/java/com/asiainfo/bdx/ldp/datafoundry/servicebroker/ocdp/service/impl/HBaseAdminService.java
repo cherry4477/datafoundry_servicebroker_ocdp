@@ -34,7 +34,7 @@ import java.util.Map;
 @Service
 public class HBaseAdminService implements OCDPAdminService{
 
-    private Logger logger = LoggerFactory.getLogger(HDFSAdminService.class);
+    private Logger logger = LoggerFactory.getLogger(HBaseAdminService.class);
 
     static final Gson gson = new GsonBuilder().create();
 
@@ -146,6 +146,7 @@ public class HBaseAdminService implements OCDPAdminService{
 
     @Override
     public String getDashboardUrl(){
+        // Todo: should support multi-tent in future, each account can only see HBase namespace which belong to themself.
         return this.clusterConfig.getHbaseMasterUrl();
     }
 

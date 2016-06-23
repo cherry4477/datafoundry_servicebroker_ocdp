@@ -12,7 +12,7 @@ public class OCDPAdminServiceMapper {
         {
             put("hdfs-shared", "HDFSAdminService");
             put("hbase-shared", "HBaseAdminService");
-            put("hive-shared", "HiveAdminService");
+            put("hive-shared", "hiveAdminService");
         }
     };
 

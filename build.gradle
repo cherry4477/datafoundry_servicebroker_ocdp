@@ -40,6 +40,7 @@ dependencies {
     compile('org.apache.directory.server:kerberos-client:2.0.0-M21')
     compile('org.apache.hadoop:hadoop-client:2.7.1')
     compile('org.apache.hbase:hbase-client:1.1.2')
+    compile('org.apache.hive:hive-jdbc:1.2.1')
     compile('com.google.guava:guava:14.0.1')
     compile('com.google.code.gson:gson:2.2.4')
 }
@@ -47,6 +48,7 @@ dependencies {
 configurations.all {
     exclude group: "org.slf4j", module: "slf4j-log4j12"
     exclude group: "log4j", module: "log4j"
+    exclude group: "org.eclipse.jetty.aggregate", module: "*"
 }
 
 jar {

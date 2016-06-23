@@ -80,6 +80,15 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String hbase_zookeeper_znodeParent;
 
+    // Hadoop Hive connectivity properties
+    private String hive_host;
+
+    private String hive_port;
+
+    private String hive_superUser;
+
+    private String hive_superUserKeytab;
+
     @Override
     public void setEnvironment(Environment env){
         this.etcd_host = env.getProperty("ETCD_HOST");
@@ -110,6 +119,10 @@ public class ClusterConfig implements EnvironmentAware{
         this.hbase_zookeeper_quorum = env.getProperty("HBASE_ZOOKEEPER_QUORUM");
         this.hbase_zookeeper_clientPort = env.getProperty("HBASE_ZOOKEEPER_CLIENT_PORT");
         this.hbase_zookeeper_znodeParent = env.getProperty("HBASE_ZOOKEEPER_ZNODE_PARENT");
+        this.hive_host = env.getProperty("HIVE_HOST");
+        this.hive_port = env.getProperty("HIVE_PORT");
+        this.hive_superUser = env.getProperty("HIVE_SUPER_USER");
+        this.hive_superUserKeytab = env.getProperty("HIVE_SUPER_USER_KEYTAB");
     }
 
     public String getEtcdHost() { return this.etcd_host; }
@@ -145,6 +158,11 @@ public class ClusterConfig implements EnvironmentAware{
     public String getHbaseZookeeperQuorum() { return this.hbase_zookeeper_quorum; }
     public String getHbaseZookeeperClientPort() { return this.hbase_zookeeper_clientPort; }
     public String getHbaseZookeeperZnodeParent() { return this.hbase_zookeeper_znodeParent; }
+
+    public String getHiveHost() { return this.hive_host; }
+    public String getHivePort() { return this.hive_port; }
+    public String getHiveSuperUser() { return this.hive_superUser; }
+    public String getHiveSuperUserKeytab() { return this.hive_superUserKeytab; }
 
     public etcdClient getEtcdClient(){
         return new etcdClient(this.etcd_host, this.etcd_port, this.etcd_user, this.etcd_pwd);
