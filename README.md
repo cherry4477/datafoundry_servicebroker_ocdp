@@ -62,10 +62,6 @@ After building, you can run service broker by run "java -jar" command like below
 
     java -jar build/libs/datafoundry-ocdp-service-broker.jar
 
-Then you can access service broker APIs like below:
-
-    curl -H "X-Broker-API-Version: 2.8" http://<broker.username>:<broker.password>@localhost:8080/v2/catalog
-
 ### 3 Run OCDP service broker in docker container:
 Overwrite krb5.conf and hdfs.keytab files in source code folder: src/main/docker/
 
@@ -78,3 +74,86 @@ Build OCDP service broker by gradle command:
 Then you can start OCDP service broker container by docker command like below:
 
     docker run -p <local port>:8080 --add-host <hostname:ip> (host list for ldap/kdc/hadoop) -e <env_name='env_value'> (env list about connectivity properties) -t asiainfo-ldp/datafoundry-ocdp-service-broker
+
+### 4 Test OCDP service broker
+Service catalog:
+
+    curl -H "X-Broker-API-Version: 2.8" http://<broker.username>:<broker.password>@localhost:8080/v2/catalog
+
+HDFS service instance provision:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hdfs-shared-001 -d '{
+      "service_id":"ae67d4ba-5c4e-4937-a68b-5b47cfe356d8",
+      "plan_id":"72150b09-1025-4533-8bae-0e04ef68ac13",
+      "organization_guid": "org-guid",
+      "space_guid":"space-guid",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+HDFS service instance binding:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hdfs-shared-003/service_bindings/hdfs-binding-001 -d '{
+      "plan_id":        "ae67d4ba-5c4e-4937-a68b-5b47cfe356d8"",
+      "service_id":     "72150b09-1025-4533-8bae-0e04ef68ac13",
+      "app_guid":       "app-guid"
+    }' -H "Content-Type: application/json"
+
+HDFS service instance unbinding:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hdfs-shared-002/service_bindings/hdfs-binding-001?service_id=ae67d4ba-5c4e-4937-a68b-5b47cfe356d8&plan_id=72150b09-1025-4533-8bae-0e04ef68ac13'
+
+HDFS service deprovision:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hdfs-shared-002?service_id=ae67d4ba-5c4e-4937-a68b-5b47cfe356d8&plan_id=72150b09-1025-4533-8bae-0e04ef68ac13'
+
+HBase service instance provision:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hbase-shared-001 -d '{
+      "service_id":"d9845ade-9410-4c7f-8689-4e032c1a8450",
+      "plan_id":"f658e391-b7d6-4b72-9e4c-c754e4943ae1",
+      "organization_guid": "org-guid",
+      "space_guid":"space-guid",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+HBase service instance binding:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hbase-shared-001/service_bindings/hbase-binding-001 -d '{
+      "service_id":"d9845ade-9410-4c7f-8689-4e032c1a8450",
+      "plan_id":"f658e391-b7d6-4b72-9e4c-c754e4943ae1",
+      "app_guid":       "app-guid"
+    }' -H "Content-Type: application/json"
+
+HBase service instance unbinding:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hbase-shared-001/service_bindings/hbase-binding-001?service_id=d9845ade-9410-4c7f-8689-4e032c1a8450&plan_id=f658e391-b7d6-4b72-9e4c-c754e4943ae1'
+
+HBase service instance deprovision:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hbase-shared-001?service_id=d9845ade-9410-4c7f-8689-4e032c1a8450&plan_id=f658e391-b7d6-4b72-9e4c-c754e4943ae1'
+
+Hive service instance provision:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hive-shared-001 -d '{
+      "service_id":"2ef26018-003d-4b2b-b786-0481d4ee9fa3",
+      "plan_id":"aa7e364f-fdbf-4187-b60a-218b6fa398ed",
+      "organization_guid": "org-guid",
+      "space_guid":"space-guid",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+Hive service instance binding:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hive-shared-001/service_bindings/hive-binding-001 -d '{
+      "service_id":"2ef26018-003d-4b2b-b786-0481d4ee9fa3",
+      "plan_id":"aa7e364f-fdbf-4187-b60a-218b6fa398ed",
+      "app_guid":       "app-guid"
+    }' -H "Content-Type: application/json"
+
+Hive service instance unbinding:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hive-shared-001/service_bindings/hive-binding-001?service_id=2ef26018-003d-4b2b-b786-0481d4ee9fa3&plan_id=aa7e364f-fdbf-4187-b60a-218b6fa398ed'
+
+Hive service instance deprovision:
+
+    curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hive-shared-001?service_id=2ef26018-003d-4b2b-b786-0481d4ee9fa3&plan_id=aa7e364f-fdbf-4187-b60a-218b6fa398ed'
