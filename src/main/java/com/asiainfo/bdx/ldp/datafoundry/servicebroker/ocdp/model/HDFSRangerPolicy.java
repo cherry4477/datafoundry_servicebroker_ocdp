@@ -11,15 +11,15 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class HDFSRangerPolicy extends BaseRangerPolicy {
 
     @JsonSerialize
-    @JsonProperty("resourcePath")
-    private String resourcePath;
+    @JsonProperty("resourceName")
+    private String resourceName;
 
     public HDFSRangerPolicy(String policyName, String id, String resourcePath, String description,
                             String repositoryName, String repositoryType, boolean isEnabled,
                             boolean isRecursive, boolean isAuditEnabled){
         super(policyName, id, description, repositoryName, repositoryType, isEnabled, isRecursive, isAuditEnabled);
-        this.resourcePath = resourcePath;
+        this.resourceName = resourcePath;
     }
 
-    public String getResourcePath() { return this.resourcePath; }
+    public String getResourcePath() { return this.resourceName; }
 }

@@ -192,7 +192,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         repository.save(instance);
 
-		return new CreateServiceInstanceResponse();
+		return new CreateServiceInstanceResponse().withDashboardUrl(instance.getDashboardUrl());
 	}
 
 	@Override
