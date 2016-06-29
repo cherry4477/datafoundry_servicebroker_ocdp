@@ -1,11 +1,11 @@
 {"serviceDefinitions":[
-  {"id":"hdfs-shared",
+  {"id":"ae67d4ba-5c4e-4937-a68b-5b47cfe356d8",
     "name":"hdfs",
     "description":"A Hadoop hdfs service broker implementation",
     "bindable":true,
     "plan_updateable":false,
     "plans":[
-      {"id":"hdfs-plan",
+      {"id":"72150b09-1025-4533-8bae-0e04ef68ac13",
         "name":"Default hdfs Plan",
         "description":"This is a default hdfs plan.  All services are created equally.",
         "metadata":{
@@ -23,13 +23,13 @@
       "imageUrl":"http://...",
       "supportUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp"
     },"requires":[],"dashboard_client":null},
-  {"id":"hbase-shared",
+  {"id":"d9845ade-9410-4c7f-8689-4e032c1a8450",
     "name":"hbase",
     "description":"A Hadoop hbase service broker implementation",
     "bindable":true,
     "plan_updateable":false,
     "plans":[
-      {"id":"hbase-plan",
+      {"id":"f658e391-b7d6-4b72-9e4c-c754e4943ae1",
         "name":"Default hbase Plan",
         "description":"This is a default hbase plan.  All services are created equally.",
         "metadata":{
@@ -45,13 +45,13 @@
       "imageUrl":"http://...",
       "supportUrl":"https://github.com/baikai/datafoundry_servicebroker_ocdp"},
     "requires":[],"dashboard_client":null},
-  {"id":"hive-shared",
+  {"id":"2ef26018-003d-4b2b-b786-0481d4ee9fa3",
     "name":"hive",
     "description":"A Hadoop hive service broker implementation",
     "bindable":true,
     "plan_updateable":false,
     "plans":[
-      {"id":"hive-plan",
+      {"id":"aa7e364f-fdbf-4187-b60a-218b6fa398ed",
         "name":"Default hive Plan",
         "description":"This is a default hive plan.  All services are created equally.",
         "metadata":{
