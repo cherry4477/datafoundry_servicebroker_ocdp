@@ -2,7 +2,7 @@ FROM centos
 
 EXPOSE 8080
 
-RUN yum update && \
+RUN yum update -y && \
     yum install -y java-1.8.0-openjdk-devel krb5-workstation krb5-libs
 
 ENV JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk/
