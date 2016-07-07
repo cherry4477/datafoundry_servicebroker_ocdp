@@ -79,5 +79,9 @@ task buildDocker(type: Docker, dependsOn: build) {
             from "src/main/docker/hbase.keytab"
             into stageDir
         }
+        copy {
+            from "src/main/docker/hive.keytab"
+            into stageDir
+        }
     }
 }
