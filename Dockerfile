@@ -13,8 +13,14 @@ COPY src/main/docker/krb5.conf /etc/krb5.conf
 
 COPY src/main/docker/*.keytab /tmp/
 
+COPY src/main/docker/start.sh start.sh
+
 RUN git clone https://github.com/asiainfoLDP/datafoundry_servicebroker_ocdp.git && \
     cd datafoundry_servicebroker_ocdp && \
     ./gradlew build
 
-ENTRYPOINT ["java", "-jar", "datafoundry_servicebroker_ocdp/build/libs/datafoundry-ocdp-service-broker.jar"]
+RUN cp datafoundry_servicebroker_ocdp/build/libs/datafoundry-ocdp-service-broker.jar app.jar
+
+#ENTRYPOINT ["java", "-jar", "datafoundry_servicebroker_ocdp/build/libs/datafoundry-ocdp-service-broker.jar"]
+
+ENTRYPOINT ["/bin/bash", "-c", "sh ./start.sh"]
