@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
+import java.io.Closeable;
 import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -10,6 +11,10 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.BaseRangerPolic
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HBaseRangerPolicy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerPolicy;
+
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.HttpClient;
@@ -42,7 +47,8 @@ import com.google.gson.GsonBuilder;
  */
 public class rangerClient {
 
-    private HttpClient httpClient;
+    private CloseableHttpClient httpClient;
+    //private HttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
 
@@ -74,10 +80,11 @@ public class rangerClient {
         URI uri = buildPolicyUri("service/public/api/policy", policyID, "");
         HttpGet request = new HttpGet(uri);
         try{
-            HttpResponse response = this.httpClient.execute(request, this.context);
+            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
             if(response.getStatusLine().getStatusCode() == 200){
                 policyDef = EntityUtils.toString(response.getEntity());
             }
+            response.close();
         }catch (IOException e){
             e.printStackTrace();
         }
@@ -93,11 +100,12 @@ public class rangerClient {
         entity.setContentType("application/json");
         request.setEntity(entity);
         try{
-            HttpResponse response = this.httpClient.execute(request, this.context);
+            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
             if(response.getStatusLine().getStatusCode() == 200)
             {
                 newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
             }
+            response.close();
         }catch (IOException e){
             e.printStackTrace();
         }
@@ -154,8 +162,9 @@ public class rangerClient {
         URI uri = buildPolicyUri("service/public/api/policy", policyID, "");
         HttpDelete request = new HttpDelete(uri);
         try{
-            HttpResponse response = this.httpClient.execute(request, this.context);
+            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
             status = (response.getStatusLine().getStatusCode() == 204);
+            response.close();
         }catch (IOException e){
             e.printStackTrace();
         }
@@ -170,8 +179,9 @@ public class rangerClient {
         entity.setContentType("application/json");
         request.setEntity(entity);
         try{
-            HttpResponse response = this.httpClient.execute(request, this.context);
+            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
             status = (response.getStatusLine().getStatusCode() == 200);
+            response.close();
         }catch (IOException e){
             e.printStackTrace();
         }

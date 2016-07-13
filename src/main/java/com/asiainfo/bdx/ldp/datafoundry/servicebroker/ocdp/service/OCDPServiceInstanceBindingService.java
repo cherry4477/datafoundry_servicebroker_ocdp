@@ -125,19 +125,36 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
 
         // Add service binding user to ranger policy
-        logger.info("Append user " + accountName + " to ranger policy " + policyId);
-        if (! ocdp.appendUserToResourcePermission(policyId, ldapGroupName, accountName)){
+        int i=0;
+        boolean updateStat = false;
+        while(i++ <= 20)
+        {
+            logger.info("Append user " + accountName + " to ranger policy " + policyId);
+            updateStat = ocdp.appendUserToResourcePermission(policyId, ldapGroupName, accountName);
+            if (updateStat == false){
+                try{
+                    Thread.sleep(3000);
+                }catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+            else{
+                logger.info("Policy update complete!");
+                break;
+            }
+        }
+        if(updateStat == false) {
             logger.error("Fail to Append user " + accountName + " to ranger policy " + policyId);
             logger.info("Rollback LDAP user: " + accountName);
-            try{
+            try {
                 this.removeLDAPUser(accountName);
-            }catch(Exception ex){
+            } catch (Exception ex) {
                 ex.printStackTrace();
             }
             logger.info("Rollback kerberos principal: " + accountName);
-            try{
+            try {
                 this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
+            } catch (KerberosOperationException ex) {
                 ex.printStackTrace();
             }
             throw new OCDPServiceException("OCDP service binding fail.");
