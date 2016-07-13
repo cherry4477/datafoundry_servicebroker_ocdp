@@ -164,8 +164,11 @@ public class HDFSAdminService implements OCDPAdminService{
             return false;
         }
         HDFSRangerPolicy rp = gson.fromJson(currentPolicy, HDFSRangerPolicy.class);
+//        rp.updatePolicyPerm(
+//                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("create"); add("admin");}}, isAppend);
+        //HDFS Policy has create and admin access type?
         rp.updatePolicyPerm(
-                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("create"); add("admin");}}, isAppend);
+                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("excute");}}, isAppend);
         return this.rc.updatePolicy(policyId, gson.toJson(rp));
     }
 
