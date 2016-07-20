@@ -44,6 +44,8 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
                 bindingId + "/syslogDrainUrl");
         String appGuid = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/appGuid");
+        String planId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId +"/planId");
         String serviceInstanceBingingUser = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/serviceInstanceBingingUser");
         String serviceInstanceBingingPwd = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
@@ -64,7 +66,7 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
             }
         };
 
-        return new ServiceInstanceBinding(id, serviceInstanceId, credentials,syslogDrainUrl, appGuid);
+        return new ServiceInstanceBinding(id, serviceInstanceId, credentials,syslogDrainUrl, appGuid, planId);
     }
 
     @Override
@@ -79,6 +81,8 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
                 bindingId + "/syslogDrainUrl", binding.getSyslogDrainUrl());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/appGuid", binding.getAppGuid());
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/planId", binding.getPlanId());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/serviceInstanceBingingUser",
                 (String)binding.getCredentials().get("serviceInstanceBingingUser"));

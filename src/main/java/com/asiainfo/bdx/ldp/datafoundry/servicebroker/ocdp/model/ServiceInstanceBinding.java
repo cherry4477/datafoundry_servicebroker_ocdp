@@ -15,16 +15,18 @@ public class ServiceInstanceBinding {
 	private Map<String, Object> credentials = new HashMap<>();
 	private String syslogDrainUrl;
 	private String appGuid;
+	private String planId;
 
 	public ServiceInstanceBinding(String id,
 								  String serviceInstanceId,
 								  Map<String,Object> credentials,
-								  String syslogDrainUrl, String appGuid) {
+								  String syslogDrainUrl, String appGuid, String planId) {
 		this.id = id;
 		this.serviceInstanceId = serviceInstanceId;
 		setCredentials(credentials);
 		this.syslogDrainUrl = syslogDrainUrl;
 		this.appGuid = appGuid;
+        this.planId = planId;
 	}
 
 	public String getId() {
@@ -54,5 +56,7 @@ public class ServiceInstanceBinding {
 	public String getAppGuid() {
 		return appGuid;
 	}
+
+    public String getPlanId() { return planId; }
 
 }

@@ -23,6 +23,7 @@ import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceBindin
 import org.springframework.cloud.servicebroker.service.ServiceInstanceBindingService;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingExistsException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceBindingDoesNotExistException;
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerInvalidParametersException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.ldap.core.LdapTemplate;
@@ -78,10 +79,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceDefinitionId = request.getServiceDefinitionId();
 		String bindingId = request.getBindingId();
 		String serviceInstanceId = request.getServiceInstanceId();
-        String planId = request.getPlanId();
-        ServiceInstanceBinding binding = bindingRepository.findOne(serviceDefinitionId, bindingId);
+        ServiceInstanceBinding binding = bindingRepository.findOne(serviceInstanceId, bindingId);
         if (binding != null) {
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
+        }
+        String planId = request.getPlanId();
+        if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance == null) {
@@ -126,12 +130,12 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
         // Add service binding user to ranger policy
         int i=0;
-        boolean updateStat = false;
+        boolean updateResult = false;
         while(i++ <= 20)
         {
             logger.info("Append user " + accountName + " to ranger policy " + policyId);
-            updateStat = ocdp.appendUserToResourcePermission(policyId, ldapGroupName, accountName);
-            if (updateStat == false){
+            updateResult = ocdp.appendUserToResourcePermission(policyId, ldapGroupName, accountName);
+            if (updateResult == false){
                 try{
                     Thread.sleep(3000);
                 }catch (InterruptedException e){
@@ -143,7 +147,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
                 break;
             }
         }
-        if(updateStat == false) {
+        if(updateResult == false) {
             logger.error("Fail to Append user " + accountName + " to ranger policy " + policyId);
             logger.info("Rollback LDAP user: " + accountName);
             try {
@@ -165,7 +169,8 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         credentials.put("serviceInstanceBindingKeytab", keyTabString);
         credentials.put("rangerPolicyId", policyId);
 
-        binding = new ServiceInstanceBinding(bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid());
+        binding = new ServiceInstanceBinding(
+                bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid(), planId);
 
         bindingRepository.save(binding);
 
@@ -178,9 +183,12 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceDefinitionId = request.getServiceDefinitionId();
         String serviceInstanceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
+        String planId = request.getPlanId();
         ServiceInstanceBinding binding = getServiceInstanceBinding(serviceInstanceId, bindingId);
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
+        }else if(planId != binding.getPlanId()){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
 
         Map<String, Object> credentials = binding.getCredentials();
