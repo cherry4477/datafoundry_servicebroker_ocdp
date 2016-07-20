@@ -1,6 +1,5 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
-import java.io.Closeable;
 import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -15,9 +14,7 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerPolic
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -48,7 +45,6 @@ import com.google.gson.GsonBuilder;
 public class rangerClient {
 
     private CloseableHttpClient httpClient;
-    //private HttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
 

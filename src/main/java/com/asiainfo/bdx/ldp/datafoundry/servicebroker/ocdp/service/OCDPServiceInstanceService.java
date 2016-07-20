@@ -23,6 +23,7 @@ import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceReques
 import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
 import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerInvalidParametersException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
@@ -85,6 +86,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance != null) {
             throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
+        }else if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         instance = new ServiceInstance(request);
 
@@ -209,9 +212,12 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             throws OCDPServiceException {
         String serviceDefinitionId = request.getServiceDefinitionId();
         String serviceInstanceId = request.getServiceInstanceId();
+        String planId = request.getPlanId();
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance == null) {
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
+        }else if(planId != instance.getPlanId()){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
         String accountName = Credential.get("serviceInstanceUser");
