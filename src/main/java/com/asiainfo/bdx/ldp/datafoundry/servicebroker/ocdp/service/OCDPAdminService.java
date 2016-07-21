@@ -1,8 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.io.IOException;
 import java.util.Map;
-import java.util.List;
 
 /**
  * Utility class for manipulating a OCDP Hadoop services.
@@ -28,5 +26,8 @@ public interface OCDPAdminService {
     boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName);
 
     String getDashboardUrl();
+
+    Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
+                                                String serviceInstanceResource, String rangerPolicyId);
 
 }

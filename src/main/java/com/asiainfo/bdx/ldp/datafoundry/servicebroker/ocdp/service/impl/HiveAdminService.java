@@ -20,6 +20,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by baikai on 5/19/16.
@@ -148,6 +150,23 @@ public class HiveAdminService implements OCDPAdminService {
     public String getDashboardUrl(){
         //TODO Hive 1.2.0 not support web UI, this part should be enhance in hive 2.1.
         return "";
+    }
+
+    @Override
+    public Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
+                                                       String serviceInstanceResource, String rangerPolicyId){
+        return new HashMap<String, Object>(){
+            {
+                put("uri", hiveJDBCUrl);
+                put("username", accountName);
+                put("password", accountKeytab);
+                put("keytab", accountKeytab);
+                put("host", clusterConfig.getHiveHost());
+                put("port", clusterConfig.getHivePort());
+                put("resource", serviceInstanceResource);
+                put("rangerPolicyId", rangerPolicyId);
+            }
+        };
     }
 
     private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){

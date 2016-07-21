@@ -46,22 +46,31 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
                 bindingId + "/appGuid");
         String planId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId +"/planId");
-        String serviceInstanceBingingUser = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId + "/Credentials/serviceInstanceBingingUser");
-        String serviceInstanceBingingPwd = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId + "/Credentials/serviceInstanceBingingPwd");
-        String serviceInstanceBingingKeytab = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId + "/Credentials/serviceInstanceBingingKeytab");
-        String serviceInstanceBingingResource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId +"/Credentials/serviceInstanceBingingResource");
+        String uri = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/uri");
+        String username = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/username");
+        String password = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/password");
+        String keytab = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/keytab");
+        String host = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/host");
+        String port = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/port");
+        String resource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                bindingId + "/Credentials/resource");
         String rangerPolicyId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/rangerPolicyId");
         Map<String, Object> credentials = new HashMap<String, Object>() {
             {
-                put("serviceInstanceBingingUser", serviceInstanceBingingUser);
-                put("serviceInstanceBingingPwd", serviceInstanceBingingPwd);
-                put("serviceInstanceBingingKeytab", serviceInstanceBingingKeytab);
-                put("serviceInstanceBingingResource", serviceInstanceBingingResource);
+                put("uri", uri);
+                put("username", username);
+                put("password", password);
+                put("keytab", keytab);
+                put("host", host);
+                put("port", port);
+                put("resource", resource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };
@@ -84,17 +93,26 @@ public class OCDPServiceInstanceBindingRepositoryImpl implements OCDPServiceInst
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/planId", binding.getPlanId());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId + "/Credentials/serviceInstanceBingingUser",
-                (String)binding.getCredentials().get("serviceInstanceBingingUser"));
+                        bindingId + "/Credentials/uri",
+                (String)binding.getCredentials().get("uri"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                        bindingId + "/Credentials/serviceInstanceBingingPwd",
-                (String)binding.getCredentials().get("serviceInstanceBingingPwd"));
+                        bindingId + "/Credentials/username",
+                (String)binding.getCredentials().get("username"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                        bindingId + "/Credentials/serviceInstanceBingingKeytab",
-                (String)binding.getCredentials().get("serviceInstanceBingingPwdKeytab"));
+                        bindingId + "/Credentials/password",
+                (String)binding.getCredentials().get("password"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
-                bindingId +"/Credentials/serviceInstanceBingingResource",
-                (String)binding.getCredentials().get("serviceInstanceBingingResource"));
+                        bindingId + "/Credentials/keytab",
+                (String)binding.getCredentials().get("keytab"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                        bindingId + "/Credentials/host",
+                (String)binding.getCredentials().get("host"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                        bindingId + "/Credentials/port",
+                (String)binding.getCredentials().get("port"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
+                        bindingId + "/Credentials/resource",
+                (String)binding.getCredentials().get("resource"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/bindings/" +
                 bindingId + "/Credentials/rangerPolicyId",
                 (String)binding.getCredentials().get("rangerPolicyId"));

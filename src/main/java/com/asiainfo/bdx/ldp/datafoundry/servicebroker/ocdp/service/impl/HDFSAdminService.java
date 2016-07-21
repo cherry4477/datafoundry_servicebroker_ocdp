@@ -54,6 +54,8 @@ public class HDFSAdminService implements OCDPAdminService{
 
     private Configuration conf;
 
+    private String hdfsRPCUrl;
+
     @Autowired
     public HDFSAdminService(ClusterConfig clusterConfig){
         this.clusterConfig = clusterConfig;
@@ -68,6 +70,8 @@ public class HDFSAdminService implements OCDPAdminService{
         conf.set("hdfs.keytab.file", clusterConfig.getHdfsUserKeytab());
 
         System.setProperty("java.security.krb5.conf", clusterConfig.getKrb5FilePath());
+
+        this.hdfsRPCUrl = "hdfs://" + this.clusterConfig.getHdfsNameNode() + ":" + this.clusterConfig.getHdfsRpcPort();
     }
 
     @Override
@@ -86,7 +90,7 @@ public class HDFSAdminService implements OCDPAdminService{
         String pathName;
         try{
             this.authentication();
-            this.dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), this.conf);
+            this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
             if(bindingId == null){
                 pathName = "/servicebroker/" + serviceInstanceId;
                 this.dfs.mkdirs(new Path(pathName), FS_PERMISSION);
@@ -127,7 +131,7 @@ public class HDFSAdminService implements OCDPAdminService{
     public void deprovisionResources(String serviceInstanceResuorceName) throws Exception{
         try{
             this.authentication();
-            this.dfs.initialize(URI.create(this.clusterConfig.getHdfsUrl()), this.conf);
+            this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
             this.dfs.delete(new Path(serviceInstanceResuorceName));
             logger.info("Delete hdfs folder successful.");
         }catch (Exception e){
@@ -153,8 +157,24 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public String getDashboardUrl(){
         // Todo: should support multi-tent in future, each account can only see HDFS folders which belong to themself.
-        String hdfsNamenodeUrl = this.clusterConfig.getHdfsUrl();
-        return hdfsNamenodeUrl.replace("hdfs", "http") + ":50070";
+        return "http://" + this.clusterConfig.getHdfsNameNode() + ":50070";
+    }
+
+    @Override
+    public Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
+                                                       String serviceInstanceResource, String rangerPolicyId){
+        return new HashMap<String, Object>(){
+            {
+                put("uri", hdfsRPCUrl + "/" + serviceInstanceResource);
+                put("username", accountName);
+                put("password", accountKeytab);
+                put("keytab", accountKeytab);
+                put("host", clusterConfig.getHdfsNameNode());
+                put("port", clusterConfig.getHdfsRpcPort());
+                put("resource", serviceInstanceResource);
+                put("rangerPolicyId", rangerPolicyId);
+            }
+        };
     }
 
     private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){
@@ -164,9 +184,6 @@ public class HDFSAdminService implements OCDPAdminService{
             return false;
         }
         HDFSRangerPolicy rp = gson.fromJson(currentPolicy, HDFSRangerPolicy.class);
-//        rp.updatePolicyPerm(
-//                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("create"); add("admin");}}, isAppend);
-        //HDFS Policy has create and admin access type?
         rp.updatePolicyPerm(
                 groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("excute");}}, isAppend);
         return this.rc.updatePolicy(policyId, gson.toJson(rp));
@@ -185,5 +202,4 @@ public class HDFSAdminService implements OCDPAdminService{
             }
         };
     }
-
 }

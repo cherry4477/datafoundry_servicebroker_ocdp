@@ -150,6 +150,24 @@ public class HBaseAdminService implements OCDPAdminService{
         return this.clusterConfig.getHbaseMasterUrl();
     }
 
+    @Override
+    public Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
+                                                       String serviceInstanceResource, String rangerPolicyId){
+        return new HashMap<String, Object>(){
+            {
+                put("uri", clusterConfig.getHbaseZookeeperQuorum() + ":" +
+                        clusterConfig.getHbaseZookeeperClientPort() + ":/" + clusterConfig.getHbaseZookeeperZnodeParent());
+                put("username", accountName);
+                put("password", accountKeytab);
+                put("keytab", accountKeytab);
+                put("host", clusterConfig.getHbaseZookeeperQuorum());
+                put("port", clusterConfig.getHbaseZookeeperClientPort());
+                put("resource", serviceInstanceResource);
+                put("rangerPolicyId", rangerPolicyId);
+            }
+        };
+    }
+
     private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){
         String currentPolicy = this.rc.getPolicy(policyId);
         if (currentPolicy == null)

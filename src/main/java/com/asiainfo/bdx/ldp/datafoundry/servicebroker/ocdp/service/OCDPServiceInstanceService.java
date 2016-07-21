@@ -1,7 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.lang.Thread;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
@@ -86,7 +85,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance != null) {
             throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
-        }else if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+        }else if(! planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         instance = new ServiceInstance(request);
@@ -163,8 +162,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
                 }
             }else{
                 logger.info("Ranger policy created.");
-                credentials.put("serviceInstanceUser", accountName);
-                credentials.put("serviceInstanceResource", serviceInstanceResource);
+                credentials.put("username", accountName);
+                credentials.put("resource", serviceInstanceResource);
                 credentials.put("rangerPolicyId", policyId);
                 break;
             }
@@ -191,8 +190,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             }
             throw new OCDPServiceException("Ranger policy create fail.");
         }
+        // Save service instance
         instance.setCredential(credentials);
-
         repository.save(instance);
 
 		return new CreateServiceInstanceResponse().withDashboardUrl(instance.getDashboardUrl());
@@ -201,10 +200,6 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 	@Override
 	public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
 		return new GetLastServiceOperationResponse().withOperationState(OperationState.SUCCEEDED);
-	}
-
-	public ServiceInstance getServiceInstance(String id) {
-		return repository.findOne(id);
 	}
 
 	@Override
@@ -216,7 +211,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance == null) {
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
-        }else if(planId != instance.getPlanId()){
+        }else if(! planId.equals(instance.getPlanId())){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
