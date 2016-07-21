@@ -37,7 +37,8 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export RANGER_ADMIN_USER=<Ranger admin user name>
      export RANGER_ADMIN_PASSWORD=<Ranger admin user password>
 
-     export HDFS_URL=<HDFS URL>
+     export HDFS_NAME_NODE=<HDFS name node host>
+     export HDFS_RPC_PORT=<HDFS RPC port>
      export HDFS_SUPER_USER=<HDFS super user principal>
      export HDFS_USER_KEYTAB=<HDFS super user keytab path>
 
