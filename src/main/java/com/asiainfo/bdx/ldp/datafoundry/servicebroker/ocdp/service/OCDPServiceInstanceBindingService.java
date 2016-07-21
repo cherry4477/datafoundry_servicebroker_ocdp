@@ -84,7 +84,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
         String planId = request.getPlanId();
-        if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+        if(! planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         ServiceInstance instance = repository.findOne(serviceInstanceId);
@@ -93,6 +93,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         Map<String, String> serviceInstanceCredentials = instance.getServiceInstanceCredentials();
         String policyId = serviceInstanceCredentials.get("rangerPolicyId");
+        String serviceInstanceResource = serviceInstanceCredentials.get("resource");
 
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();
@@ -163,17 +164,14 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             }
             throw new OCDPServiceException("OCDP service binding fail.");
         }
-        Map<String, Object> credentials = new HashMap<String, Object>();
-        credentials.put("serviceInstanceBingingUser", accountName);
-        credentials.put("serviceInstanceBingingPwd", pwd);
-        credentials.put("serviceInstanceBindingKeytab", keyTabString);
-        credentials.put("rangerPolicyId", policyId);
-
+        // Save service instance binding
+        Map<String, Object> credentials = ocdp.generateCredentialsInfo(
+                                   accountName, pwd, keyTabString, serviceInstanceResource, policyId);
         binding = new ServiceInstanceBinding(
                 bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid(), planId);
-
         bindingRepository.save(binding);
 
+        credentials.remove("rangerPolicyId");
         return new CreateServiceInstanceAppBindingResponse().withCredentials(credentials);
 	}
 
@@ -184,15 +182,15 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceInstanceId = request.getServiceInstanceId();
         String bindingId = request.getBindingId();
         String planId = request.getPlanId();
-        ServiceInstanceBinding binding = getServiceInstanceBinding(serviceInstanceId, bindingId);
+        ServiceInstanceBinding binding = bindingRepository.findOne(serviceInstanceId, bindingId);
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
-        }else if(planId != binding.getPlanId()){
+        }else if(! planId.equals(binding.getPlanId())){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
 
         Map<String, Object> credentials = binding.getCredentials();
-        String accountName = (String)credentials.get("serviceInstanceBingingUser");
+        String accountName = (String)credentials.get("username");
         String policyId = (String)credentials.get("rangerPolicyId");
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();
@@ -224,10 +222,6 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         bindingRepository.delete(serviceInstanceId, bindingId);
     }
-
-	protected ServiceInstanceBinding getServiceInstanceBinding(String serviceInstanceId, String bindingId) {
-		return bindingRepository.findOne(serviceInstanceId, bindingId);
-	}
 
     private void createLDAPUser(String accountName, String groupName){
         String baseDN = "ou=People";

@@ -61,7 +61,9 @@ public class ClusterConfig implements EnvironmentAware{
     private String ranger_pwd;
 
     // Hadoop HDFS connectivity properties
-    private String hdfs_url;
+    private String hdfs_nameNode;
+
+    private String hdfs_rpcPort;
 
     private String hdfs_superUser;
 
@@ -110,7 +112,8 @@ public class ClusterConfig implements EnvironmentAware{
         this.ranger_url = env.getProperty("RANGER_URL");
         this.ranger_user = env.getProperty("RANGER_ADMIN_USER");
         this.ranger_pwd = env.getProperty("RANGER_ADMIN_PASSWORD");
-        this.hdfs_url = env.getProperty("HDFS_URL");
+        this.hdfs_nameNode = env.getProperty("HDFS_NAME_NODE");
+        this.hdfs_rpcPort = env.getProperty("HDFS_RPC_PORT");
         this.hdfs_superUser = env.getProperty("HDFS_SUPER_USER");
         this.hdfs_userKeytab = env.getProperty("HDFS_USER_KEYTAB");
         this.hbase_masterUrl = env.getProperty("HBASE_MASTER_URL");
@@ -148,7 +151,8 @@ public class ClusterConfig implements EnvironmentAware{
     public String getRangerUser() { return this.ranger_user; }
     public String getRangerPwd() { return this.ranger_pwd; }
 
-    public String getHdfsUrl() { return this.hdfs_url;}
+    public String getHdfsNameNode() { return this.hdfs_nameNode;}
+    public String getHdfsRpcPort() { return this.hdfs_rpcPort; }
     public String getHdfsSuperUser() { return this.hdfs_superUser; }
     public String getHdfsUserKeytab() { return this.hdfs_userKeytab; }
 
