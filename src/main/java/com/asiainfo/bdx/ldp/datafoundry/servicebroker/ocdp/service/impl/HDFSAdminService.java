@@ -167,7 +167,7 @@ public class HDFSAdminService implements OCDPAdminService{
             {
                 put("uri", hdfsRPCUrl + "/" + serviceInstanceResource);
                 put("username", accountName);
-                put("password", accountKeytab);
+                put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHdfsNameNode());
                 put("port", clusterConfig.getHdfsRpcPort());

@@ -194,7 +194,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         instance.setCredential(credentials);
         repository.save(instance);
 
-		return new CreateServiceInstanceResponse().withDashboardUrl(instance.getDashboardUrl());
+		return new CreateServiceInstanceResponse().withDashboardUrl(instance.getDashboardUrl()).withAsync(false);
 	}
 
 	@Override
@@ -215,8 +215,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
-        String accountName = Credential.get("serviceInstanceUser");
-        String serviceInstanceResource = Credential.get("serviceInstanceResource");
+        String accountName = Credential.get("username");
+        String serviceInstanceResource = Credential.get("resource");
         String policyId = Credential.get("rangerPolicyId");
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
@@ -256,7 +256,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
         repository.delete(serviceInstanceId);
 
-		return new DeleteServiceInstanceResponse();
+		return new DeleteServiceInstanceResponse().withAsync(false);
 	}
 
 	@Override
