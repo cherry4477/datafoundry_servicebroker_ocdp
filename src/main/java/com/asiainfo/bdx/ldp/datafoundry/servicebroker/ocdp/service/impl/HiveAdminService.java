@@ -159,7 +159,7 @@ public class HiveAdminService implements OCDPAdminService {
             {
                 put("uri", hiveJDBCUrl);
                 put("username", accountName);
-                put("password", accountKeytab);
+                put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHiveHost());
                 put("port", clusterConfig.getHivePort());
