@@ -259,6 +259,11 @@ public class OCDPServiceInstanceOperationService {
 		return new DeleteServiceInstanceResponse().withAsync(false);
 	}
 
+    public String getOCDPServiceDashboard(String serviceDefinitionId){
+        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
+        return ocdp.getDashboardUrl();
+    }
+
     private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
         return  (OCDPAdminService) this.context.getBean(
                 OCDPAdminServiceMapper.getOCDPAdminService(serviceDefinitionId)

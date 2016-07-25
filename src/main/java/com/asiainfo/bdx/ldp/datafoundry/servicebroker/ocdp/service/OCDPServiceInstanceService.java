@@ -42,14 +42,10 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
         if(request.isAsyncAccepted()){
             Future<CreateServiceInstanceResponse> responseFuture = service.doCreateServiceInstanceAsync(request);
-            try{
-                this.instanceProvisionStateMap.put(request.getServiceInstanceId(), responseFuture);
-                response = responseFuture.get();
-            }catch (ExecutionException e){
-                e.printStackTrace();
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
+            this.instanceProvisionStateMap.put(request.getServiceInstanceId(), responseFuture);
+            response = new CreateServiceInstanceResponse()
+                    .withDashboardUrl(service.getOCDPServiceDashboard(request.getServiceDefinitionId()))
+                    .withAsync(true);
         } else {
             response = service.doCreateServiceInstance(request);
         }
@@ -72,6 +68,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
         // Return operation type
         if(is_operation_done){
+            removeOperationState(serviceInstanceId, operationType);
             if (getOperationState(serviceInstanceId, operationType)){
                 return new GetLastServiceOperationResponse().withOperationState(OperationState.SUCCEEDED);
             } else {
@@ -89,14 +86,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
         if(request.isAsyncAccepted()){
             Future<DeleteServiceInstanceResponse> responseFuture = service.doDeleteServiceInstanceAsync(request);
-            try{
-                this.instanceDeleteStateMap.put(request.getServiceInstanceId(), responseFuture);
-                response = responseFuture.get();
-            }catch (ExecutionException e){
-                e.printStackTrace();
-            } catch (InterruptedException e){
-                e.printStackTrace();
-            }
+            this.instanceDeleteStateMap.put(request.getServiceInstanceId(), responseFuture);
+            response = new DeleteServiceInstanceResponse().withAsync(true);
         } else {
             response = service.doDeleteServiceInstance(request);
         }
@@ -132,6 +123,14 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
             return (repository.findOne(serviceInstanceId) == null);
         } else {
             return false;
+        }
+    }
+
+    private void removeOperationState(String serviceInstanceId, OperationType operationType){
+        if (operationType == OperationType.PROVISION){
+            this.instanceProvisionStateMap.remove(serviceInstanceId);
+        } else if ( operationType == OperationType.DELETE){
+            this.instanceDeleteStateMap.remove(serviceInstanceId);
         }
     }
 }
