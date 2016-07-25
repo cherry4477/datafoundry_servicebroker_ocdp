@@ -1,288 +1,136 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
-import java.lang.Thread;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.UUID;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.ldap.LdapName;
-
-
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationRequest;
-import org.springframework.cloud.servicebroker.model.GetLastServiceOperationResponse;
-import org.springframework.cloud.servicebroker.model.OperationState;
-import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceRequest;
-import org.springframework.cloud.servicebroker.model.UpdateServiceInstanceResponse;
-import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
-import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
-import org.springframework.cloud.servicebroker.exception.ServiceBrokerInvalidParametersException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
-
-import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.OperationType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.servicebroker.model.*;
+import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.context.ApplicationContext;
-import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.ldap.support.LdapNameBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
- * OCDP impl to manage hadoop service instances.  Creating a service does the following:
- * creates a new service instance user,
- * create hadoop service instance(e.g. hdfs dir, hbase table...),
- * set permission for service instance user,
- * saves the ServiceInstance info to the hdaoop repository.
- *  
- * @author whitebai1986@gmail.com
+ * Created by baikai on 7/23/16.
  */
 @Service
 public class OCDPServiceInstanceService implements ServiceInstanceService {
 
-    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceService.class);
-
-    @Autowired
-	private OCDPServiceInstanceRepository repository;
-
     @Autowired
     private ApplicationContext context;
 
-    private ClusterConfig clusterConfig;
-
-    private LdapTemplate ldap;
-
-    private krbClient kc;
-
     @Autowired
-    public OCDPServiceInstanceService(ClusterConfig clusterConfig) {
-        this.clusterConfig = clusterConfig;
-        this.ldap = clusterConfig.getLdapTemplate();
-        this.kc = new krbClient(clusterConfig);
+    private OCDPServiceInstanceRepository repository;
+
+    // Operation response cache
+    private Map<String, Future<CreateServiceInstanceResponse>> instanceProvisionStateMap;
+
+    private Map<String, Future<DeleteServiceInstanceResponse>> instanceDeleteStateMap;
+
+    public OCDPServiceInstanceService() {
+        this.instanceProvisionStateMap = new HashMap<>();
+        this.instanceDeleteStateMap = new HashMap<>();
     }
 
-    private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
-        return  (OCDPAdminService) this.context.getBean(
-                OCDPAdminServiceMapper.getOCDPAdminService(serviceDefinitionId)
-        );
+    @Override
+    public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) throws OCDPServiceException {
+        CreateServiceInstanceResponse response = null;
+        OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
+        if(request.isAsyncAccepted()){
+            Future<CreateServiceInstanceResponse> responseFuture = service.doCreateServiceInstanceAsync(request);
+            this.instanceProvisionStateMap.put(request.getServiceInstanceId(), responseFuture);
+            response = new CreateServiceInstanceResponse()
+                    .withDashboardUrl(service.getOCDPServiceDashboard(request.getServiceDefinitionId()))
+                    .withAsync(true);
+        } else {
+            response = service.doCreateServiceInstance(request);
+        }
+        return response;
     }
 
-	@Override
-	public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) throws OCDPServiceException {
-        String serviceDefinitionId = request.getServiceDefinitionId();
+    @Override
+    public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
         String serviceInstanceId = request.getServiceInstanceId();
-        String planId = request.getPlanId();
-        ServiceInstance instance = repository.findOne(serviceInstanceId);
-        if (instance != null) {
-            throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
-        }else if(! planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
-            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
+        // Determine operation type: provision or delete
+        OperationType operationType = getOperationType(serviceInstanceId);
+        // Get Last operation response object from cache
+        boolean is_operation_done = false;
+        if( operationType == OperationType.PROVISION){
+            Future<CreateServiceInstanceResponse> responseFuture = this.instanceProvisionStateMap.get(serviceInstanceId);
+            is_operation_done = responseFuture.isDone();
+        } else if( operationType == OperationType.DELETE){
+            Future<DeleteServiceInstanceResponse> responseFuture = this.instanceDeleteStateMap.get(serviceInstanceId);
+            is_operation_done = responseFuture.isDone();
         }
-        instance = new ServiceInstance(request);
-
-        String ldapGroupName = this.clusterConfig.getLdapGroup();
-        String krbRealm = this.clusterConfig.getKrbRealm();
-        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
-        instance.setDashboardUrl(ocdp.getDashboardUrl());
-
-        // Create LDAP user for service instance
-        logger.info("create ldap user.");
-        String accountName = "serviceinstance_" + UUID.randomUUID().toString();
-        try{
-            this.createLDAPUser(accountName, ldapGroupName);
-        }catch (Exception e){
-            logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("LDAP user create fail due to: " + e.getLocalizedMessage());
+        // Return operation type
+        if(is_operation_done){
+            removeOperationState(serviceInstanceId, operationType);
+            if (getOperationState(serviceInstanceId, operationType)){
+                return new GetLastServiceOperationResponse().withOperationState(OperationState.SUCCEEDED);
+            } else {
+                return new GetLastServiceOperationResponse().withOperationState(OperationState.FAILED);
+            }
+        }else{
+            return new GetLastServiceOperationResponse().withOperationState(OperationState.IN_PROGRESS);
         }
+    }
 
-        //Create Kerberos principal for new LDAP user
-        logger.info("create kerberos principal.");
-        String pn = accountName + "@" + krbRealm;
-        String pwd = UUID.randomUUID().toString();
-        try{
-            this.kc.createPrincipal(pn, pwd);
-        }catch(KerberosOperationException e){
-            logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                this.removeLDAPUser(accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-            throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
-        }
-        // Create Hadoop resource like hdfs folder, hbase table ...
-        String serviceInstanceResource;
-        try{
-            serviceInstanceResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, null);
-        }catch (Exception e){
-            logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                this.removeLDAPUser(accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback kerberos principal: " + accountName);
-            try{
-                this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
-                ex.printStackTrace();
-            }
-            throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
-        }
-
-        // Set permission by Apache Ranger
-        Map<String, String> credentials = new HashMap<String, String>();
-        String policyName = UUID.randomUUID().toString();
-        String policyId = null;
-        int i = 0;
-        logger.info("Try to create ranger policy...");
-        while(i++ <= 20){
-            policyId = ocdp.assignPermissionToResources(policyName, serviceInstanceResource, accountName, ldapGroupName);
-            // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
-            if (policyId == null){
-                try{
-                    Thread.sleep(3000);
-                }catch (InterruptedException e){
-                    e.printStackTrace();
-                }
-            }else{
-                logger.info("Ranger policy created.");
-                credentials.put("username", accountName);
-                credentials.put("resource", serviceInstanceResource);
-                credentials.put("rangerPolicyId", policyId);
-                break;
-            }
-        }
-        if (policyId == null){
-            logger.error("Ranger policy create fail.");
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                this.removeLDAPUser(accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback kerberos principal: " + accountName);
-            try{
-                this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback OCDP resource: " + serviceInstanceResource);
-            try{
-                ocdp.deprovisionResources(serviceInstanceResource);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            throw new OCDPServiceException("Ranger policy create fail.");
-        }
-        // Save service instance
-        instance.setCredential(credentials);
-        repository.save(instance);
-
-		return new CreateServiceInstanceResponse().withDashboardUrl(instance.getDashboardUrl()).withAsync(false);
-	}
-
-	@Override
-	public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
-		return new GetLastServiceOperationResponse().withOperationState(OperationState.SUCCEEDED);
-	}
-
-	@Override
-	public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request)
+    @Override
+    public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request)
             throws OCDPServiceException {
-        String serviceDefinitionId = request.getServiceDefinitionId();
-        String serviceInstanceId = request.getServiceInstanceId();
-        String planId = request.getPlanId();
-        ServiceInstance instance = repository.findOne(serviceInstanceId);
-        if (instance == null) {
-            throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
-        }else if(! planId.equals(instance.getPlanId())){
-            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
+        DeleteServiceInstanceResponse response = null;
+        OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
+        if(request.isAsyncAccepted()){
+            Future<DeleteServiceInstanceResponse> responseFuture = service.doDeleteServiceInstanceAsync(request);
+            this.instanceDeleteStateMap.put(request.getServiceInstanceId(), responseFuture);
+            response = new DeleteServiceInstanceResponse().withAsync(true);
+        } else {
+            response = service.doDeleteServiceInstance(request);
         }
-        Map<String, String> Credential = instance.getServiceInstanceCredentials();
-        String accountName = Credential.get("username");
-        String serviceInstanceResource = Credential.get("resource");
-        String policyId = Credential.get("rangerPolicyId");
-        String krbRealm = this.clusterConfig.getKrbRealm();
-        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
-        // Unset permission by Apache Ranger
-        boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyId);
-        if(!policyDeleteResult)
-        {
-            logger.error("Ranger policy delete fail.");
-            throw new OCDPServiceException("Ranger policy delete fail.");
-        }
-        // Delete Kerberos principal for new LDAP user
-        logger.info("Delete kerberos principal.");
-        try{
-            this.kc.removePrincipal(accountName + "@" + krbRealm);
-        }catch(KerberosOperationException e){
-            logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
-        }
-        // Delete LDAP user for service instance
-        logger.info("Delete ldap user.");
-        try{
-            this.removeLDAPUser(accountName);
-        }catch (Exception e){
-            logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("Delete LDAP user fail due to: " + e.getLocalizedMessage());
-        }
-        // Delete Hadoop resource like hdfs folder, hbase table ...
-        try{
-            ocdp.deprovisionResources(serviceInstanceResource);
-        }catch (Exception e){
-            logger.error("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("OCDP resource deprovision fail due to: " + e.getLocalizedMessage());
-        }
+        return response;
+    }
 
-        repository.delete(serviceInstanceId);
-
-		return new DeleteServiceInstanceResponse().withAsync(false);
-	}
-
-	@Override
-	public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
+    @Override
+    public UpdateServiceInstanceResponse updateServiceInstance(UpdateServiceInstanceRequest request) {
         // TODO OCDP service instance update
         return new UpdateServiceInstanceResponse();
-	}
-
-    private void createLDAPUser(String accountName, String groupName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("memberOf", "cn=" + groupName +",ou=Group,dc=asiainfo,dc=com");
-        BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("account");
-        userAttributes.put(classAttribute);
-        this.ldap.bind(ldapName, null, userAttributes);
     }
 
-    private void removeLDAPUser(String accountName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        this.ldap.unbind(ldapName);
+    private OCDPServiceInstanceOperationService getAsyncOCDPServiceInstanceService() {
+        return (OCDPServiceInstanceOperationService)context.getBean("OCDPServiceInstanceOperationService");
+    }
+
+    private OperationType getOperationType(String serviceInstanceId){
+        if (this.instanceProvisionStateMap.get(serviceInstanceId) != null){
+            return OperationType.PROVISION;
+        } else if (this.instanceDeleteStateMap.get(serviceInstanceId) != null){
+            return OperationType.DELETE;
+        } else {
+            return null;
+        }
+    }
+
+    private boolean getOperationState(String serviceInstanceId, OperationType operationType){
+        if (operationType == OperationType.PROVISION){
+            // For instance provision case, return true if instance information existed in etcd
+            return (repository.findOne(serviceInstanceId) != null);
+        }else if(operationType == OperationType.DELETE){
+            // For instance delete case, return true if instance information not existed in etcd
+            return (repository.findOne(serviceInstanceId) == null);
+        } else {
+            return false;
+        }
+    }
+
+    private void removeOperationState(String serviceInstanceId, OperationType operationType){
+        if (operationType == OperationType.PROVISION){
+            this.instanceProvisionStateMap.remove(serviceInstanceId);
+        } else if ( operationType == OperationType.DELETE){
+            this.instanceDeleteStateMap.remove(serviceInstanceId);
+        }
     }
 }
