@@ -45,9 +45,9 @@ import org.springframework.ldap.support.LdapNameBuilder;
  * @author whitebai1986@gmail.com
  */
 @Service
-public class OCDPServiceInstanceOperationService {
+public class OCDPServiceInstanceLifecycleService {
 
-    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceOperationService.class);
+    private Logger logger = LoggerFactory.getLogger(OCDPServiceInstanceLifecycleService.class);
 
     @Autowired
 	private OCDPServiceInstanceRepository repository;
@@ -62,7 +62,7 @@ public class OCDPServiceInstanceOperationService {
     private krbClient kc;
 
     @Autowired
-    public OCDPServiceInstanceOperationService(ClusterConfig clusterConfig) {
+    public OCDPServiceInstanceLifecycleService(ClusterConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
         this.ldap = clusterConfig.getLdapTemplate();
         this.kc = new krbClient(clusterConfig);
