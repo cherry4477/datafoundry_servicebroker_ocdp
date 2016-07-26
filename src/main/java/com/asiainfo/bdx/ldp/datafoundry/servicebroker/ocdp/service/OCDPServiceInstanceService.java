@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -39,7 +38,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     @Override
     public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) throws OCDPServiceException {
         CreateServiceInstanceResponse response = null;
-        OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
+        OCDPServiceInstanceLifecycleService service = getOCDPServiceInstanceLifecycleService();
         if(request.isAsyncAccepted()){
             Future<CreateServiceInstanceResponse> responseFuture = service.doCreateServiceInstanceAsync(request);
             this.instanceProvisionStateMap.put(request.getServiceInstanceId(), responseFuture);
@@ -53,10 +52,13 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     }
 
     @Override
-    public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) {
+    public GetLastServiceOperationResponse getLastOperation(GetLastServiceOperationRequest request) throws OCDPServiceException {
         String serviceInstanceId = request.getServiceInstanceId();
         // Determine operation type: provision or delete
         OperationType operationType = getOperationType(serviceInstanceId);
+        if (operationType == null){
+            throw new OCDPServiceException("Service instance " + serviceInstanceId + " not exist.");
+        }
         // Get Last operation response object from cache
         boolean is_operation_done = false;
         if( operationType == OperationType.PROVISION){
@@ -69,7 +71,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         // Return operation type
         if(is_operation_done){
             removeOperationState(serviceInstanceId, operationType);
-            if (getOperationState(serviceInstanceId, operationType)){
+            if (checkOperationResult(serviceInstanceId, operationType)){
                 return new GetLastServiceOperationResponse().withOperationState(OperationState.SUCCEEDED);
             } else {
                 return new GetLastServiceOperationResponse().withOperationState(OperationState.FAILED);
@@ -82,8 +84,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     @Override
     public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request)
             throws OCDPServiceException {
-        DeleteServiceInstanceResponse response = null;
-        OCDPServiceInstanceOperationService service = getAsyncOCDPServiceInstanceService();
+        DeleteServiceInstanceResponse response;
+        OCDPServiceInstanceLifecycleService service = getOCDPServiceInstanceLifecycleService();
         if(request.isAsyncAccepted()){
             Future<DeleteServiceInstanceResponse> responseFuture = service.doDeleteServiceInstanceAsync(request);
             this.instanceDeleteStateMap.put(request.getServiceInstanceId(), responseFuture);
@@ -100,8 +102,8 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         return new UpdateServiceInstanceResponse();
     }
 
-    private OCDPServiceInstanceOperationService getAsyncOCDPServiceInstanceService() {
-        return (OCDPServiceInstanceOperationService)context.getBean("OCDPServiceInstanceOperationService");
+    private OCDPServiceInstanceLifecycleService getOCDPServiceInstanceLifecycleService() {
+        return (OCDPServiceInstanceLifecycleService)context.getBean("OCDPServiceInstanceLifecycleService");
     }
 
     private OperationType getOperationType(String serviceInstanceId){
@@ -114,7 +116,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         }
     }
 
-    private boolean getOperationState(String serviceInstanceId, OperationType operationType){
+    private boolean checkOperationResult(String serviceInstanceId, OperationType operationType){
         if (operationType == OperationType.PROVISION){
             // For instance provision case, return true if instance information existed in etcd
             return (repository.findOne(serviceInstanceId) != null);
