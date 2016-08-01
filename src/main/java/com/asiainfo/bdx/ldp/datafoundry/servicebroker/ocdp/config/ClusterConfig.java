@@ -1,8 +1,10 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.ambariClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.yarnClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -89,6 +91,22 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String hive_superUserKeytab;
 
+    //Hadoop Ambari connectivity properties
+    private String ambari_host;
+
+    private String ambari_adminUser;
+
+    private String ambari_adminPwd;
+
+    //Hadoop Yarn Resource Manager properties
+    private String yarn_rm_host;
+
+    private String yarn_rm_url;
+
+    private String yarn_superUser;
+
+    private String yarn_superUserKeytab;
+
     @Override
     public void setEnvironment(Environment env){
         this.etcd_host = env.getProperty("ETCD_HOST");
@@ -123,6 +141,13 @@ public class ClusterConfig implements EnvironmentAware{
         this.hive_port = env.getProperty("HIVE_PORT");
         this.hive_superUser = env.getProperty("HIVE_SUPER_USER");
         this.hive_superUserKeytab = env.getProperty("HIVE_SUPER_USER_KEYTAB");
+        this.ambari_host = env.getProperty("AMBARI_HOST");
+        this.ambari_adminUser = env.getProperty("AMBARI_ADMIN_USER");
+        this.ambari_adminPwd = env.getProperty("AMBARI_ADMIN_PWD");
+        this.yarn_rm_host = env.getProperty("YARN_RESOURCEMANAGER_HOST");
+        this.yarn_rm_url = env.getProperty("YARN_RESOURCEMANAGER_URL");
+        this.yarn_superUser = env.getProperty("YARN_SUPER_USER");
+        this.yarn_superUserKeytab = env.getProperty("YARN_SUPER_USER_KEYTAB");
     }
 
     public String getEtcdHost() { return this.etcd_host; }
@@ -164,6 +189,15 @@ public class ClusterConfig implements EnvironmentAware{
     public String getHiveSuperUser() { return this.hive_superUser; }
     public String getHiveSuperUserKeytab() { return this.hive_superUserKeytab; }
 
+    public String getAmbari_host(){return this.ambari_host;}
+    public String getAmbari_adminUser(){return this.ambari_adminUser;}
+    public String getAmbari_adminPwd(){return this.ambari_adminPwd;}
+
+    public String getYarn_rm_host(){return this.yarn_rm_host;}
+    public String getYarn_rm_url(){return this.yarn_rm_url;}
+    public String getYarn_superUser(){return this.yarn_superUser;}
+    public String getYarn_superUserKeytab(){return this.yarn_superUserKeytab;}
+
     public etcdClient getEtcdClient(){
         return new etcdClient(this.etcd_host, this.etcd_port, this.etcd_user, this.etcd_pwd);
     }
@@ -186,5 +220,14 @@ public class ClusterConfig implements EnvironmentAware{
     @Bean
     public rangerClient getRangerClient(){
         return new rangerClient(this.ranger_url, this.ranger_user, this.ranger_pwd);
+    }
+
+    @Bean
+    public ambariClient getAmbariClient(){
+        return new ambariClient(this.ambari_host,this.ambari_adminUser,this.ambari_adminPwd);
+    }
+    @Bean
+    public yarnClient getYarnClient(){
+        return new yarnClient(this.yarn_rm_url,"","");
     }
 }

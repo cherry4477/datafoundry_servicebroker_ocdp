@@ -84,7 +84,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
         String planId = request.getPlanId();
-        if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+        if(!planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         ServiceInstance instance = repository.findOne(serviceInstanceId);
@@ -187,7 +187,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         ServiceInstanceBinding binding = getServiceInstanceBinding(serviceInstanceId, bindingId);
         if (binding == null) {
             throw new ServiceInstanceBindingDoesNotExistException(bindingId);
-        }else if(planId != binding.getPlanId()){
+        }else if(!planId.equals(binding.getPlanId())){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
 

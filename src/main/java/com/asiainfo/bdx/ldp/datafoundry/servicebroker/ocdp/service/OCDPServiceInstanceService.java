@@ -84,9 +84,12 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         String serviceInstanceId = request.getServiceInstanceId();
         String planId = request.getPlanId();
         ServiceInstance instance = repository.findOne(serviceInstanceId);
+        //Test
+        String testPlanId = OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId);
+        //Test
         if (instance != null) {
             throw new ServiceInstanceExistsException(request.getServiceInstanceId(), request.getServiceDefinitionId());
-        }else if(planId != OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId)){
+        }else if(!planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         instance = new ServiceInstance(request);
@@ -216,7 +219,7 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         ServiceInstance instance = repository.findOne(serviceInstanceId);
         if (instance == null) {
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
-        }else if(planId != instance.getPlanId()){
+        }else if(!planId.equals(instance.getPlanId())){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
