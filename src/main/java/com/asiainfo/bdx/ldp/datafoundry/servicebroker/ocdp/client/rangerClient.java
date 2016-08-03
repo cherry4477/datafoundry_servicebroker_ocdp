@@ -68,25 +68,17 @@ public class rangerClient {
         this.context = context;
     }
 
-    public String getPolicy(String policyID){
-        String policyDef = null;
-        URI uri = buildPolicyUri("service/public/api/policy", policyID, "");
-        HttpGet request = new HttpGet(uri);
-        try{
-            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
-            if(response.getStatusLine().getStatusCode() == 200){
-                policyDef = EntityUtils.toString(response.getEntity());
-            }
-            response.close();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return policyDef;
+    public String getPolicy(String policyID) {
+        return doGetPolicy("service/public/api/policy", policyID);
     }
 
     public String getV2Policy(String policyID){
+        return doGetPolicy("service/public/v2/api/policy", policyID);
+    }
+
+    private String doGetPolicy(String url, String policyID){
         String policyDef = null;
-        URI uri = buildPolicyUri("service/public/v2/api/policy", policyID, "");
+        URI uri = buildPolicyUri(url, policyID, "");
         HttpGet request = new HttpGet(uri);
         try{
             CloseableHttpResponse response = this.httpClient.execute(request, this.context);
@@ -101,9 +93,13 @@ public class rangerClient {
     }
 
     private String createPolicy(BaseRangerPolicy policy){
+        return doCreatePolicy("service/public/v2/api/policy", policy);
+    }
+
+    private String createV2Policy(YarnRangerPolicy policy){
         String newPolicyString = null;
         String policyDef = gson.toJson(policy);
-        URI uri = buildPolicyUri("service/public/api/policy", "", "");
+        URI uri = buildPolicyUri("service/public/v2/api/policy", "", "");
         HttpPost request = new HttpPost(uri);
         StringEntity entity = new StringEntity(policyDef, HTTP.UTF_8);
         entity.setContentType("application/json");
@@ -121,10 +117,10 @@ public class rangerClient {
         return newPolicyString;
     }
 
-    private String createV2Policy(YarnRangerPolicy policy){
+    private String doCreatePolicy(String url, BaseRangerPolicy policy){
         String newPolicyString = null;
         String policyDef = gson.toJson(policy);
-        URI uri = buildPolicyUri("service/public/v2/api/policy", "", "");
+        URI uri = buildPolicyUri(url, "", "");
         HttpPost request = new HttpPost(uri);
         StringEntity entity = new StringEntity(policyDef, HTTP.UTF_8);
         entity.setContentType("application/json");
@@ -199,28 +195,19 @@ public class rangerClient {
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;
-
-
     }
 
-
     public boolean removePolicy(String policyID){
-        boolean status = false;
-        URI uri = buildPolicyUri("service/public/api/policy", policyID, "");
-        HttpDelete request = new HttpDelete(uri);
-        try{
-            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
-            status = (response.getStatusLine().getStatusCode() == 204);
-            response.close();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return status;
+        return doRemovePolicy("service/public/api/policy", policyID);
     }
 
     public boolean removeV2Policy(String policyID){
+        return doRemovePolicy("service/public/v2/api/policy", policyID);
+    }
+
+    private boolean doRemovePolicy(String url, String policyID){
         boolean status = false;
-        URI uri = buildPolicyUri("service/public/v2/api/policy", policyID, "");
+        URI uri = buildPolicyUri(url, policyID, "");
         HttpDelete request = new HttpDelete(uri);
         try{
             CloseableHttpResponse response = this.httpClient.execute(request, this.context);
@@ -233,24 +220,16 @@ public class rangerClient {
     }
 
     public boolean updatePolicy(String policyID, String policyUpdateDef){
-        boolean status = false;
-        URI uri = buildPolicyUri("service/public/api/policy/" + policyID, "", "");
-        HttpPut request = new HttpPut(uri);
-        StringEntity entity = new StringEntity(policyUpdateDef, HTTP.UTF_8);
-        entity.setContentType("application/json");
-        request.setEntity(entity);
-        try{
-            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
-            status = (response.getStatusLine().getStatusCode() == 200);
-            response.close();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return status;
+        return doUpdatePolicy("service/public/api/policy/", policyID, policyUpdateDef);
     }
+
     public boolean updateV2Policy(String policyID, String policyUpdateDef){
+        return doUpdatePolicy("service/public/v2/api/policy/", policyID, policyUpdateDef);
+    }
+
+    private boolean doUpdatePolicy(String url, String policyID, String policyUpdateDef){
         boolean status = false;
-        URI uri = buildPolicyUri("service/public/v2/api/policy/" + policyID, "", "");
+        URI uri = buildPolicyUri(url + policyID, "", "");
         HttpPut request = new HttpPut(uri);
         StringEntity entity = new StringEntity(policyUpdateDef, HTTP.UTF_8);
         entity.setContentType("application/json");

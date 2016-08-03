@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -11,6 +12,7 @@ import java.util.Map;
 /**
  * Created by Aaron on 16/7/21.
  */
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class YarnRangerPolicy{
 
     @JsonSerialize
@@ -105,10 +107,6 @@ public class YarnRangerPolicy{
         return this.resources.get("queue").values;
     }
 
-
-
-
-
     class RangerResource{
         boolean isRecursive;
         boolean isExcludes;
@@ -121,14 +119,14 @@ public class YarnRangerPolicy{
         boolean delegateAdmin;
         List<RangerAccess> accesses = new ArrayList<RangerAccess>();;
         List<String> conditions = new ArrayList<String>();
-//
-//        PolicyItem(){
-//            users = new ArrayList<String>();
-//            groups = new ArrayList<String>();
-//            conditions = new ArrayList<String>();
-//            accesses = new ArrayList<RangerAccess>();
-//        }
-
+/**
+        PolicyItem(){
+            users = new ArrayList<String>();
+            groups = new ArrayList<String>();
+            conditions = new ArrayList<String>();
+            accesses = new ArrayList<RangerAccess>();
+        }
+**/
         private class RangerAccess {
             boolean isAllowed;
             String type;
@@ -138,6 +136,7 @@ public class YarnRangerPolicy{
                 this.type = type;
             }
         }
+
         public List<RangerAccess> getAccesses(List<String> types){
 
             List<RangerAccess> accesses = new ArrayList<RangerAccess>();

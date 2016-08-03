@@ -263,6 +263,11 @@ public class YarnAdminService implements OCDPAdminService {
         return null;
     }
 
+    @Override
+    public Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
+                                                       String serviceInstanceResource, String rangerPolicyId){
+        return new HashMap<>();
+    }
 
     private Map<String, Long> getQuotaFromPlan(String serviceDefinitionId, String planId){
         CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");

@@ -230,8 +230,10 @@ public class ClusterConfig implements EnvironmentAware{
     public ambariClient getAmbariClient(){
         return new ambariClient(this.ambari_host,this.ambari_adminUser,this.ambari_adminPwd);
     }
+
     @Bean
     public yarnClient getYarnClient(){
         return new yarnClient(this.yarn_rm_url,"","");
     }
+
 }

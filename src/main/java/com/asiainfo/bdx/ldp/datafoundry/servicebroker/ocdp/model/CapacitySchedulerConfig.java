@@ -8,8 +8,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import javax.security.auth.login.ConfigurationSpi;
-
 /**
  * Created by Aaron on 16/7/20.
  */

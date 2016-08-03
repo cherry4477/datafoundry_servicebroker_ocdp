@@ -2,11 +2,8 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
 import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -39,9 +36,6 @@ public class yarnClient{
     private String availableMemory;
     private String allocateMemory;
 
-
-//    static final Gson gson = new GsonBuilder().create();
-
     public yarnClient(String uri, String username, String password) {
         if(! uri.endsWith("/")){
             uri += "/";
@@ -51,7 +45,7 @@ public class yarnClient{
         this.httpClient = HttpClientBuilder.create().build();
 
         HttpHost targetHost = new HttpHost(this.baseUri.getHost(), 8088, "http");
-        CredentialsProvider provider = new BasicCredentialsProvider();
+ //       CredentialsProvider provider = new BasicCredentialsProvider();
 //        provider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
 //                new UsernamePasswordCredentials(username, password));
         AuthCache authCache = new BasicAuthCache();
@@ -101,7 +95,6 @@ public class yarnClient{
     public String getAvailableMemory(){ return  this.availableMemory;}
     public String getAllocateMemory(){ return this.allocateMemory;}
 
-
     private String excuteRequest(HttpUriRequest request)
     {
         String responseDef = null;
@@ -132,6 +125,7 @@ public class yarnClient{
         URI uri = this.baseUri.resolve(sb.toString());
         return uri;
     }
+
     protected static String urlEscape(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");

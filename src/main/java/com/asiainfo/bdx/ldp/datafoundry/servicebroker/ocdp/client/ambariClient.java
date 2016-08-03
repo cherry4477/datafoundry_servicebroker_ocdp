@@ -1,12 +1,9 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.CapacitySchedulerConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.google.common.base.Splitter;
-import com.google.gson.JsonArray;
 import com.google.gson.internal.LinkedTreeMap;
-import org.apache.avro.data.Json;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
@@ -31,8 +28,8 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 
 /**
  * Created by Aaron on 16/7/20.
@@ -42,6 +39,9 @@ public class ambariClient {
     private CloseableHttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
+    @Autowired
+    private ApplicationContext appContext;
+    private ClusterConfig config;
 
     static final Gson gson = new GsonBuilder().create();
 
@@ -64,11 +64,12 @@ public class ambariClient {
         context.setCredentialsProvider(provider);
         context.setAuthCache(authCache);
         this.context = context;
+        this.config = (ClusterConfig)this.appContext.getBean("clusterConfig");
     }
 
     private String getCapacitySchedulerTag(String rmHost){
 
-        URI uri = buildUri("api/v1/clusters/OCDPforLDP/hosts",rmHost,
+        URI uri = buildUri("api/v1/clusters/" + this.config.getClusterName() + "/hosts",rmHost,
                 "/host_components/RESOURCEMANAGER?fields=HostRoles/actual_configs/capacity-scheduler");
         HttpGet request = new HttpGet(uri);
 
@@ -81,14 +82,13 @@ public class ambariClient {
 
         String versionTag = getCapacitySchedulerTag(rmHost);
 
-        URI uri = buildUri("api/v1/clusters/OCDPforLDP","","configurations?type=capacity-scheduler&tag="+versionTag);
+        URI uri = buildUri("api/v1/clusters/" + this.config.getClusterName(),"","configurations?type=capacity-scheduler&tag="+versionTag);
 
         HttpGet request = new HttpGet(uri);
 
         return excuteRequest(request);
 
     }
-
 
     /**
      * PUT Capacity-Scheduler Config to Ambari
@@ -127,7 +127,7 @@ public class ambariClient {
         String refreshRequestEntity = buildRequestEntity("YARN",rmHost,"RESOURCEMANAGER",
                 "capacity-scheduler","Refresh YARN Capacity Scheduler","REFRESHQUEUES");
 
-        URI uri = buildUri("api/v1/clusters/OCDPforLDP/requests/","","");
+        URI uri = buildUri("api/v1/clusters/" + this.config.getClusterName() + "/requests/","","");
 
         HttpPost request = new HttpPost(uri);
 
@@ -151,7 +151,6 @@ public class ambariClient {
         return null;
 
     }
-
 
     /**
      * build refresh request
@@ -198,7 +197,6 @@ public class ambariClient {
         return null;
     }
 
-
     /**
      *
      * @param jsonStr
@@ -226,7 +224,6 @@ public class ambariClient {
         return finalStr;
 
     }
-
 
     private String excuteRequest(HttpUriRequest request)
     {
@@ -258,6 +255,7 @@ public class ambariClient {
         URI uri = this.baseUri.resolve(sb.toString());
         return uri;
     }
+
     protected static String urlEscape(String s) {
         try {
             return URLEncoder.encode(s, "UTF-8");
@@ -265,6 +263,5 @@ public class ambariClient {
             throw new IllegalStateException();
         }
     }
-
 
 }
