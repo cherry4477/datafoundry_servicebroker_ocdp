@@ -6,17 +6,18 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Created by baikai on 6/13/16.
+ * V1 API is compatible with Apache Ranger 4.x or before.
  */
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class HDFSRangerPolicy extends BaseRangerPolicy {
+public class HDFSRangerV1Policy extends BaseRangerV1Policy {
 
     @JsonSerialize
     @JsonProperty("resourceName")
     private String resourceName;
 
-    public HDFSRangerPolicy(String policyName, String id, String resourcePath, String description,
-                            String repositoryName, String repositoryType, boolean isEnabled,
-                            boolean isRecursive, boolean isAuditEnabled){
+    public HDFSRangerV1Policy(String policyName, String id, String resourcePath, String description,
+                              String repositoryName, String repositoryType, boolean isEnabled,
+                              boolean isRecursive, boolean isAuditEnabled){
         super(policyName, id, description, repositoryName, repositoryType, isEnabled, isRecursive, isAuditEnabled);
         this.resourceName = resourcePath;
     }

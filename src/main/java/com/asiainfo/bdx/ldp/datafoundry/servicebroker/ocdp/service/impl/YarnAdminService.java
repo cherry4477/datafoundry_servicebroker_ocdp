@@ -6,22 +6,15 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.yarnClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.CapacitySchedulerConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.YarnRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.YarnCapacityCaculater;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.internal.LinkedTreeMap;
-import com.google.gson.internal.Streams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.yarn.api.records.YarnClusterMetrics;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.hadoop.yarn.server.resourcemanager.ResourceManager;
-import org.apache.hadoop.yarn.server.resourcemanager.scheduler.QueueMetrics;
-import org.apache.hadoop.yarn.server.resourcemanager.scheduler.ResourceScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +22,8 @@ import org.springframework.cloud.servicebroker.model.Plan;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import org.apache.hadoop.yarn.client.api.YarnClient;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -211,7 +201,7 @@ public class YarnAdminService implements OCDPAdminService {
     public boolean unassignPermissionFromResources(String policyId) {
 //        String currentPolicy = this.rc.getV2Policy(policyId);
 //        if(currentPolicy != null){
-//            YarnRangerPolicy rp = gson.fromJson(currentPolicy,YarnRangerPolicy.class);
+//            RangerV2Policy rp = gson.fromJson(currentPolicy,RangerV2Policy.class);
 //            List<String> users = rp.getUserList();
 //
 //        }
@@ -231,7 +221,7 @@ public class YarnAdminService implements OCDPAdminService {
         {
             return false;
         }
-        YarnRangerPolicy rp = gson.fromJson(currentPolicy, YarnRangerPolicy.class);
+        RangerV2Policy rp = gson.fromJson(currentPolicy, RangerV2Policy.class);
         rp.updatePolicy(
                 groupName, accountName, new ArrayList<String>(){{add("submit-app");add("admin-queue");}}, isAppend);
         String queueName = rp.getResourceValues().get(0);

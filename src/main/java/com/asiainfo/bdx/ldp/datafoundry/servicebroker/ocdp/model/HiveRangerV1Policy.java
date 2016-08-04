@@ -6,9 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * Created by baikai on 6/14/16.
+ * V1 API is compatible with Apache Ranger 4.x or before.
  */
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class HiveRangerPolicy extends BaseRangerPolicy{
+public class HiveRangerV1Policy extends BaseRangerV1Policy {
 
     @JsonSerialize
     @JsonProperty("databases")
@@ -22,9 +23,9 @@ public class HiveRangerPolicy extends BaseRangerPolicy{
     @JsonProperty("column")
     private String columns;
 
-    public HiveRangerPolicy(String policyName, String id, String databases, String tables, String columns,
-                            String description, String repositoryName, String repositoryType, boolean isEnabled,
-                            boolean isRecursive, boolean isAuditEnabled){
+    public HiveRangerV1Policy(String policyName, String id, String databases, String tables, String columns,
+                              String description, String repositoryName, String repositoryType, boolean isEnabled,
+                              boolean isRecursive, boolean isAuditEnabled){
         super(policyName, id, description, repositoryName, repositoryType, isEnabled, isRecursive, isAuditEnabled);
         this.databases = databases;
         this.tables = tables;

@@ -2,6 +2,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerV1Policy;
 
 import java.io.IOException;
 import java.sql.DriverManager;
@@ -101,12 +102,16 @@ public class HiveAdminService implements OCDPAdminService {
     @Override
     public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign select/update/create/drop/alter/index/lock/all permission to hive database.");
+        ArrayList<String> dbList = new ArrayList<String>(){{add(resourceName);}};
+        ArrayList<String> cfList = new ArrayList<String>(){{add("*");}};
+        ArrayList<String> cList = new ArrayList<String>(){{add("*");}};
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
-        ArrayList<String> permList = new ArrayList<String>(){{add("select"); add("update");
+        ArrayList<String> types = new ArrayList<String>(){{add("select"); add("update");
             add("create"); add("drop"); add("alter"); add("index"); add("lock"); add("all");}};
-        return this.rc.createHivePolicy(policyName, resourceName, "*", "*", "Desc: Hive policy.",
-                this.clusterConfig.getClusterName() + "_hive", "hive", groupList, userList, permList);
+        ArrayList<String> conditions = new ArrayList<String>();
+        return this.rc.createHivePolicy(policyName,"This is Hive Policy", clusterConfig.getClusterName()+"_hive",
+                dbList, cfList, cList, groupList,userList,types,conditions);
     }
 
     @Override
@@ -138,7 +143,7 @@ public class HiveAdminService implements OCDPAdminService {
     @Override
     public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign select/update/create/drop/alter/index/lock/all permission to hive table.");
-        return this.rc.removePolicy(policyId);
+        return this.rc.removeV2Policy(policyId);
     }
 
     @Override
@@ -170,16 +175,16 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){
-        String currentPolicy = this.rc.getPolicy(policyId);
+        String currentPolicy = this.rc.getV2Policy(policyId);
         if (currentPolicy == null)
         {
             return false;
         }
-        HiveRangerPolicy rp = gson.fromJson(currentPolicy, HiveRangerPolicy.class);
-        rp.updatePolicyPerm(
+        RangerV2Policy rp = gson.fromJson(currentPolicy, RangerV2Policy.class);
+        rp.updatePolicy(
                 groupName, accountName, new ArrayList<String>(){{add("select"); add("update");
                     add("create"); add("drop"); add("alter"); add("index"); add("lock"); add("all");}}, isAppend);
-        return this.rc.updatePolicy(policyId, gson.toJson(rp));
+        return this.rc.updateV2Policy(policyId, gson.toJson(rp));
     }
 
 }

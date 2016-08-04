@@ -92,11 +92,28 @@ public class rangerClient {
         return policyDef;
     }
 
-    private String createPolicy(BaseRangerPolicy policy){
-        return doCreatePolicy("service/public/v2/api/policy", policy);
+    private String createPolicy(BaseRangerV1Policy policy){
+        String newPolicyString = null;
+        String policyDef = gson.toJson(policy);
+        URI uri = buildPolicyUri("service/public/api/policy", "", "");
+        HttpPost request = new HttpPost(uri);
+        StringEntity entity = new StringEntity(policyDef, HTTP.UTF_8);
+        entity.setContentType("application/json");
+        request.setEntity(entity);
+        try{
+            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
+            if(response.getStatusLine().getStatusCode() == 200)
+            {
+                newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
+            }
+            response.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return newPolicyString;
     }
 
-    private String createV2Policy(YarnRangerPolicy policy){
+    private String createV2Policy(RangerV2Policy policy){
         String newPolicyString = null;
         String policyDef = gson.toJson(policy);
         URI uri = buildPolicyUri("service/public/v2/api/policy", "", "");
@@ -117,67 +134,47 @@ public class rangerClient {
         return newPolicyString;
     }
 
-    private String doCreatePolicy(String url, BaseRangerPolicy policy){
-        String newPolicyString = null;
-        String policyDef = gson.toJson(policy);
-        URI uri = buildPolicyUri(url, "", "");
-        HttpPost request = new HttpPost(uri);
-        StringEntity entity = new StringEntity(policyDef, HTTP.UTF_8);
-        entity.setContentType("application/json");
-        request.setEntity(entity);
-        try{
-            CloseableHttpResponse response = this.httpClient.execute(request, this.context);
-            if(response.getStatusLine().getStatusCode() == 200)
-            {
-                newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
-            }
-            response.close();
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-        return newPolicyString;
-    }
-
-    public String createHDFSPolicy(String policyName, String resourcePath, String description,
-                                   String repositoryName, String repositoryType, List<String> groupList,
-                                   List<String> userList, List<String> permList){
+    public String createHDFSPolicy(String policyName, String description, String seviceName, List<String> pathList, List<String> groupList,
+                                   List<String> userList, List<String> types, List<String> conditions){
         String policyId = null;
-        HDFSRangerPolicy rp = new HDFSRangerPolicy(policyName, "", resourcePath, description,
-                repositoryName, repositoryType, true, true, true);
-        rp.addPermToPolicy(groupList, userList, permList);
-        String newPolicyString = this.createPolicy(rp);
+        RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
+        rp.addResources2("path", pathList,false,true);
+        rp.addPolicyItems(userList,groupList,conditions,false,types);
+        String newPolicyString = this.createV2Policy(rp);
         if (newPolicyString != null){
-            HDFSRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HDFSRangerPolicy.class);
+            RangerV2Policy newPolicyObj = gson.fromJson(newPolicyString, RangerV2Policy.class);
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;
     }
 
-    public String createHBasePolicy(String policyName, String tables, String columnFamilies, String columns,
-                                    String description, String repositoryName, String repositoryType, List<String> groupList,
-                                    List<String> userList, List<String> permList){
+    public String createHBasePolicy(String policyName, String description, String seviceName, List<String> tablesList, List<String> columnFamiliesList,
+                                    List<String> columnsList, List<String> groupList, List<String> userList, List<String> types, List<String> conditions){
         String policyId = null;
-        HBaseRangerPolicy rp = new HBaseRangerPolicy(policyName, "", tables, columnFamilies, columns,
-                description, repositoryName, repositoryType, true, true, true);
-        rp.addPermToPolicy(groupList, userList, permList);
-        String newPolicyString = this.createPolicy(rp);
+        RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
+        rp.addResources("table", tablesList, false);
+        rp.addResources("column-family", columnFamiliesList, false);
+        rp.addResources("columns", columnsList, false);
+        rp.addPolicyItems(userList,groupList,conditions,false,types);
+        String newPolicyString = this.createV2Policy(rp);
         if (newPolicyString != null){
-            HBaseRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HBaseRangerPolicy.class);
+            RangerV2Policy newPolicyObj = gson.fromJson(newPolicyString, RangerV2Policy.class);
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;
     }
 
-    public String createHivePolicy(String policyName, String databases, String tables, String columns,
-                                   String description, String repositoryName, String repositoryType, List<String> groupList,
-                                   List<String> userList, List<String> permList){
+    public String createHivePolicy(String policyName, String description, String seviceName, List<String> databaseesList, List<String> tablesList,
+                                   List<String> columnsListList, List<String> groupList, List<String> userList, List<String> types, List<String> conditions){
         String policyId = null;
-        HiveRangerPolicy rp = new HiveRangerPolicy(policyName, "", databases, tables, columns,
-                description, repositoryName, repositoryType, true, true, true);
-        rp.addPermToPolicy(groupList, userList, permList);
-        String newPolicyString = this.createPolicy(rp);
+        RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
+        rp.addResources("database", databaseesList, false);
+        rp.addResources("table", tablesList, false);
+        rp.addResources("column", columnsListList, false);
+        rp.addPolicyItems(userList,groupList,conditions,false,types);
+        String newPolicyString = this.createV2Policy(rp);
         if (newPolicyString != null){
-            HiveRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, HiveRangerPolicy.class);
+            RangerV2Policy newPolicyObj = gson.fromJson(newPolicyString, RangerV2Policy.class);
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;
@@ -186,12 +183,12 @@ public class rangerClient {
     public String createYarnPolicy(String policyName, String description, String seviceName, List<String> queueList, List<String> groupList,
                                    List<String> userList, List<String> types, List<String> conditions){
         String policyId = null;
-        YarnRangerPolicy rp = new YarnRangerPolicy(policyName,"",description,seviceName,true,true);
-        rp.addResources(queueList,false,true);
+        RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
+        rp.addResources2("queue", queueList,false,true);
         rp.addPolicyItems(userList,groupList,conditions,false,types);
         String newPolicyString = this.createV2Policy(rp);
         if (newPolicyString != null){
-            YarnRangerPolicy newPolicyObj = gson.fromJson(newPolicyString, YarnRangerPolicy.class);
+            RangerV2Policy newPolicyObj = gson.fromJson(newPolicyString, RangerV2Policy.class);
             policyId = newPolicyObj.getPolicyId();
         }
         return policyId;
