@@ -9,9 +9,10 @@ import java.util.List;
 
 /**
  * Created by baikai on 6/13/16.
+ * V1 API is compatible with Apache Ranger 4.x or before.
  */
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class BaseRangerPolicy {
+public class BaseRangerV1Policy {
 
     @JsonSerialize
     @JsonProperty("policyName")
@@ -55,9 +56,9 @@ public class BaseRangerPolicy {
         private List<String> groupList = new ArrayList<String>();
     }
 
-    public BaseRangerPolicy(String policyName, String id, String description,
-                            String repositoryName, String repositoryType, boolean isEnabled,
-                            boolean isRecursive, boolean isAuditEnabled){
+    public BaseRangerV1Policy(String policyName, String id, String description,
+                              String repositoryName, String repositoryType, boolean isEnabled,
+                              boolean isRecursive, boolean isAuditEnabled){
         this.policyName = policyName;
         this.id = id;
         this.description = description;

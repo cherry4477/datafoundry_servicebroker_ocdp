@@ -7,7 +7,8 @@ import java.net.URI;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerPolicy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerV1Policy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.cloud.servicebroker.model.Plan;
@@ -115,11 +116,13 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hdfs folder.");
+        ArrayList<String> pathList = new ArrayList<String>(){{add(resourceName);}};
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
-        ArrayList<String> permList = new ArrayList<String>(){{add("read"); add("write"); add("execute");}};
-        return this.rc.createHDFSPolicy(policyName, resourceName, "Desc: HDFS policy.",
-                this.clusterConfig.getClusterName() + "_hadoop", "hdfs", groupList, userList, permList);
+        ArrayList<String> types = new ArrayList<String>(){{add("read");add("write");add("execute");}};
+        ArrayList<String> conditions = new ArrayList<String>();
+        return this.rc.createHDFSPolicy(policyName,"This is HDFS Policy",clusterConfig.getClusterName()+"_hadoop",
+                pathList, groupList,userList,types,conditions);
     }
 
     @Override
@@ -146,7 +149,7 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public boolean unassignPermissionFromResources(String policyId){
         logger.info("Unassign read/write/execute permission to hdfs folder.");
-        return this.rc.removePolicy(policyId);
+        return this.rc.removeV2Policy(policyId);
     }
 
     @Override
@@ -178,15 +181,15 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     private boolean updateUserForResourcePermission(String policyId, String groupName, String accountName, boolean isAppend){
-        String currentPolicy = this.rc.getPolicy(policyId);
+        String currentPolicy = this.rc.getV2Policy(policyId);
         if (currentPolicy == null)
         {
             return false;
         }
-        HDFSRangerPolicy rp = gson.fromJson(currentPolicy, HDFSRangerPolicy.class);
-        rp.updatePolicyPerm(
-                groupName, accountName, new ArrayList<String>(){{add("read"); add("write"); add("excute");}}, isAppend);
-        return this.rc.updatePolicy(policyId, gson.toJson(rp));
+        RangerV2Policy rp = gson.fromJson(currentPolicy, RangerV2Policy.class);
+        rp.updatePolicy(
+                groupName, accountName, new ArrayList<String>(){{add("read");add("write");add("execute");}}, isAppend);
+        return this.rc.updateV2Policy(policyId, gson.toJson(rp));
     }
 
     private Map<String, Long> getQuotaFromPlan(String serviceDefinitionId, String planId){

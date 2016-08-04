@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Aaron on 16/7/21.
+ * Created by baikai on 8/3/21.
+ * V2 API is compatible with Apache Ranger 5.0 +.
+ * OCDP Service broker will only use V2 API.
  */
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class YarnRangerPolicy{
+public class RangerV2Policy{
 
     @JsonSerialize
     @JsonProperty("id")
@@ -47,8 +49,7 @@ public class YarnRangerPolicy{
     @JsonProperty("policyItems")
     private List<PolicyItem> policyItems;
 
-
-    public YarnRangerPolicy(String policyName, String id, String description,
+    public RangerV2Policy(String policyName, String id, String description,
                             String service, boolean isEnabled, boolean isAuditEnabled){
         this.id = id;
         this.name = policyName;
@@ -56,22 +57,27 @@ public class YarnRangerPolicy{
         this.service = service;
         this.isAuditEnabled = isAuditEnabled;
         this.isEnabled = isEnabled;
-        this.resources = new HashMap<String, RangerResource>();
-        this.policyItems = new ArrayList<PolicyItem>();
+        this.resources = new HashMap<>();
+        this.policyItems = new ArrayList<>();
     }
 
-    public void addResources(List<String> queueList,boolean isExcludes, boolean isRecursive){
+    public void addResources(String resourceType, List<String> resourceList, boolean isExcludes){
         RangerResource rr = new RangerResource();
-        rr.values.addAll(queueList);
+        rr.values.addAll(resourceList);
+        rr.isExcludes = isExcludes;
+        resources.put(resourceType, rr);
+    }
+
+    public void addResources2(String resourceType, List<String> resourceList, boolean isExcludes, boolean isRecursive){
+        RangerResource2 rr = new RangerResource2();
+        rr.values.addAll(resourceList);
         rr.isExcludes = isExcludes;
         rr.isRecursive = isRecursive;
-
-        resources.put("queue",rr);
+        resources.put(resourceType, rr);
     }
 
     public void addPolicyItems(List<String> users, List<String> groups, List<String> conditions,
                                boolean delegateAdmin, List<String> types){
-
         PolicyItem pi = new PolicyItem();
         pi.delegateAdmin = delegateAdmin;
         pi.users.addAll(users);
@@ -103,30 +109,29 @@ public class YarnRangerPolicy{
     public List<String> getUserList(){
         return this.policyItems.get(0).getUsers();
     }
+    public List<String> getGroupList(){
+        return this.policyItems.get(0).getGroups();
+    }
     public List<String> getResourceValues(){
         return this.resources.get("queue").values;
     }
 
-    class RangerResource{
+    class RangerResource2 extends RangerResource{
         boolean isRecursive;
+    }
+
+    class RangerResource{
         boolean isExcludes;
         List<String> values = new ArrayList<String>();
     }
-    class PolicyItem{
 
+    class PolicyItem{
         List<String> users = new ArrayList<String>();
         List<String> groups = new ArrayList<String>();
         boolean delegateAdmin;
-        List<RangerAccess> accesses = new ArrayList<RangerAccess>();;
+        List<RangerAccess> accesses = new ArrayList<RangerAccess>();
         List<String> conditions = new ArrayList<String>();
-/**
-        PolicyItem(){
-            users = new ArrayList<String>();
-            groups = new ArrayList<String>();
-            conditions = new ArrayList<String>();
-            accesses = new ArrayList<RangerAccess>();
-        }
-**/
+
         private class RangerAccess {
             boolean isAllowed;
             String type;
@@ -150,6 +155,10 @@ public class YarnRangerPolicy{
 
         public List<String> getUsers(){
             return users;
+        }
+
+        public List<String> getGroups(){
+            return groups;
         }
     }
 
