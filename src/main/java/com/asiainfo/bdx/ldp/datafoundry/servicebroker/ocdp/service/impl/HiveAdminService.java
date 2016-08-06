@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HiveRangerV1Policy;
 
 import java.io.IOException;
 import java.sql.DriverManager;
@@ -64,8 +63,7 @@ public class HiveAdminService implements OCDPAdminService {
                 "/default;principal=" + this.clusterConfig.getHiveSuperUser();
     }
 
-    @Override
-    public void authentication(){
+    private void authentication(){
         UserGroupInformation.setConfiguration(this.conf);
         try{
             UserGroupInformation.loginUserFromKeytab(

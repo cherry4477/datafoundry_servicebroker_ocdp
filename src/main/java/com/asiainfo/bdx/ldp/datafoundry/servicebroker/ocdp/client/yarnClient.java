@@ -5,14 +5,12 @@ import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import org.apache.http.HttpHost;
 import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
@@ -36,7 +34,7 @@ public class yarnClient{
     private String availableMemory;
     private String allocateMemory;
 
-    public yarnClient(String uri, String username, String password) {
+    public yarnClient(String uri) {
         if(! uri.endsWith("/")){
             uri += "/";
         }
@@ -45,19 +43,14 @@ public class yarnClient{
         this.httpClient = HttpClientBuilder.create().build();
 
         HttpHost targetHost = new HttpHost(this.baseUri.getHost(), 8088, "http");
- //       CredentialsProvider provider = new BasicCredentialsProvider();
-//        provider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT, AuthScope.ANY_REALM),
-//                new UsernamePasswordCredentials(username, password));
         AuthCache authCache = new BasicAuthCache();
         authCache.put(targetHost, new BasicScheme());
         HttpClientContext context = HttpClientContext.create();
-//        context.setCredentialsProvider(provider);
         context.setAuthCache(authCache);
         this.context = context;
     }
 
     public void getClusterMetrics(){
-
         URI uri = buildUri("","","ws/v1/cluster/metrics");
 
         HttpGet request = new HttpGet(uri);
@@ -69,15 +62,13 @@ public class yarnClient{
         this.availableMemory = getMetrics("availableMB",jsonStr);
 
         this.totalMemory = String.valueOf(Double.parseDouble(this.allocateMemory) + Double.parseDouble(this.availableMemory));
-
     }
 
     private String getMetrics(String key, String jsonStr){
-
         String value = null;
 
         try{
-            Map<?,?> response = null;
+            Map<?,?> response;
             Gson gson = new Gson();
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<Map<?, ?>>() {
             }.getType();

@@ -109,6 +109,12 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String yarn_superUserKeytab;
 
+    //Hadoop MapReduce History server
+    private String mr_history_url;
+
+    //Hadoop Spark History server
+    private String spark_history_url;
+
     @Override
     public void setEnvironment(Environment env){
         this.etcd_host = env.getProperty("ETCD_HOST");
@@ -151,6 +157,8 @@ public class ClusterConfig implements EnvironmentAware{
         this.yarn_rm_url = env.getProperty("YARN_RESOURCEMANAGER_URL");
         this.yarn_superUser = env.getProperty("YARN_SUPER_USER");
         this.yarn_superUserKeytab = env.getProperty("YARN_SUPER_USER_KEYTAB");
+        this.mr_history_url = env.getProperty("MR_HISTORY_URL");
+        this.spark_history_url = env.getProperty("SPARK_HISTORY_URL");
     }
 
     public String getEtcdHost() { return this.etcd_host; }
@@ -197,10 +205,14 @@ public class ClusterConfig implements EnvironmentAware{
     public String getAmbari_adminUser(){return this.ambari_adminUser;}
     public String getAmbari_adminPwd(){return this.ambari_adminPwd;}
 
-    public String getYarn_rm_host(){return this.yarn_rm_host;}
-    public String getYarn_rm_url(){return this.yarn_rm_url;}
-    public String getYarn_superUser(){return this.yarn_superUser;}
-    public String getYarn_superUserKeytab(){return this.yarn_superUserKeytab;}
+    public String getYarnRMHost(){return this.yarn_rm_host;}
+    public String getYarnRMUrl(){return this.yarn_rm_url;}
+    public String getYarnSuperUser(){return this.yarn_superUser;}
+    public String getYarnSuperUserKeytab(){return this.yarn_superUserKeytab;}
+
+    public String getMRHistoryURL() { return this.mr_history_url; }
+
+    public String getSparkHistoryURL() { return this.spark_history_url; }
 
     public etcdClient getEtcdClient(){
         return new etcdClient(this.etcd_host, this.etcd_port, this.etcd_user, this.etcd_pwd);
@@ -233,7 +245,7 @@ public class ClusterConfig implements EnvironmentAware{
 
     @Bean
     public yarnClient getYarnClient(){
-        return new yarnClient(this.yarn_rm_url,"","");
+        return new yarnClient(this.yarn_rm_url);
     }
 
 }

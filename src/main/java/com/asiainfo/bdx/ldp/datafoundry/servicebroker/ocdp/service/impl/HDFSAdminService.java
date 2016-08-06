@@ -7,7 +7,6 @@ import java.net.URI;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.HDFSRangerV1Policy;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -75,8 +74,7 @@ public class HDFSAdminService implements OCDPAdminService{
         this.hdfsRPCUrl = "hdfs://" + this.clusterConfig.getHdfsNameNode() + ":" + this.clusterConfig.getHdfsRpcPort();
     }
 
-    @Override
-    public void authentication() throws Exception{
+    private void authentication() throws Exception{
         UserGroupInformation.setConfiguration(this.conf);
         try{
             UserGroupInformation.loginUserFromKeytab(
