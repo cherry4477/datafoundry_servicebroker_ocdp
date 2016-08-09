@@ -54,6 +54,10 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export HIVE_SUPER_USER=<Hive admin user>
      export HIVE_SUPER_USER_KEYTAB=<Hive admin user keytab>
 
+     export MR_HISTORY_URL=<MapReduce History server URL>
+
+     export SPARK_HISTORY_URL=<Spark History server URL>
+
 ### 2 Run OCDP service broker in VM:
 Build OCDP service broker by gradle command:
 
@@ -158,3 +162,55 @@ Hive service instance unbinding:
 Hive service instance deprovision:
 
     curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/hive-shared-001?service_id=2ef26018-003d-4b2b-b786-0481d4ee9fa3&plan_id=aa7e364f-fdbf-4187-b60a-218b6fa398ed'
+
+MapReduce service instance provision:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/mr-shared-001?accepts_incomplete=true -d '{
+      "service_id":"ae0f2324-27a8-415b-9c7f-64ab6cd88d40",
+      "plan_id":"6524c793-0ea5-4456-9a60-ca70271decdc",
+      "organization_guid": "org-guid",
+      "space_guid":"space-guid",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+MapReduce service instance binding:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/mr-shared-001/service_bindings/mr-binding-001 -d '{
+      "service_id":"ae0f2324-27a8-415b-9c7f-64ab6cd88d40",
+      "plan_id":"6524c793-0ea5-4456-9a60-ca70271decdc",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+MapReduce service instance unbinding:
+
+      curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/mr-shared-001/service_bindings/mr-binding-001?service_id=ae0f2324-27a8-415b-9c7f-64ab6cd88d40&plan_id=6524c793-0ea5-4456-9a60-ca70271decdc'
+
+MapReduce service instance deprovision:
+
+      curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080//v2/service_instances/mr-shared-001?service_id=ae0f2324-27a8-415b-9c7f-64ab6cd88d40&plan_id=6524c793-0ea5-4456-9a60-ca70271decdc'
+
+Spark service instance provision:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/spark-shared-001?accepts_incomplete=true -d '{
+      "service_id":"d3b9a485-f038-4605-9b9b-29792f5c61d1",
+      "plan_id":"5c3d471d-f94a-4bb8-b340-f783f3c15ba1",
+      "organization_guid": "org-guid",
+      "space_guid":"space-guid",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+Spark service instance binding:
+
+    curl -i -X PUT http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/spark-shared-001/service_bindings/spark-binding-001 -d '{
+      "service_id":"d3b9a485-f038-4605-9b9b-29792f5c61d1",
+      "plan_id":"5c3d471d-f94a-4bb8-b340-f783f3c15ba1",
+      "parameters": {"ami_id":"ami-ecb68a84"}
+    }' -H "Content-Type: application/json"
+
+Spark service instance unbinding:
+
+      curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080/v2/service_instances/spark-shared-001/service_bindings/spark-binding-001?service_id=d3b9a485-f038-4605-9b9b-29792f5c61d1&plan_id=5c3d471d-f94a-4bb8-b340-f783f3c15ba1'
+
+Spark service instance deprovision:
+
+      curl -i -X DELETE 'http://<broker.username>:<broker.password>@localhost:8080//v2/service_instances/spark-shared-001?service_id=d3b9a485-f038-4605-9b9b-29792f5c61d1&plan_id=5c3d471d-f94a-4bb8-b340-f783f3c15ba1'
