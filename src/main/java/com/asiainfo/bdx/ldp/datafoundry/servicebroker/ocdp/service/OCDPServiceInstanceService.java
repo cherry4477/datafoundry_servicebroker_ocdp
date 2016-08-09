@@ -1,10 +1,15 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.*;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.OperationType;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.servicebroker.exception.ServiceBrokerInvalidParametersException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceDoesNotExistException;
+import org.springframework.cloud.servicebroker.exception.ServiceInstanceExistsException;
 import org.springframework.cloud.servicebroker.model.*;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
 import org.springframework.cloud.servicebroker.service.ServiceInstanceService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
@@ -37,7 +42,17 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
 
     @Override
     public CreateServiceInstanceResponse createServiceInstance(CreateServiceInstanceRequest request) throws OCDPServiceException {
-        CreateServiceInstanceResponse response = null;
+        String serviceDefinitionId = request.getServiceDefinitionId();
+        String serviceInstanceId = request.getServiceInstanceId();
+        String planId = request.getPlanId();
+        ServiceInstance instance = repository.findOne(serviceInstanceId);
+        // Check service instance and planid
+        if (instance != null) {
+            throw new ServiceInstanceExistsException(serviceInstanceId, serviceDefinitionId);
+        }else if(! planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
+        }
+        CreateServiceInstanceResponse response;
         OCDPServiceInstanceLifecycleService service = getOCDPServiceInstanceLifecycleService();
         if(request.isAsyncAccepted()){
             Future<CreateServiceInstanceResponse> responseFuture = service.doCreateServiceInstanceAsync(request);
@@ -84,14 +99,23 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
     @Override
     public DeleteServiceInstanceResponse deleteServiceInstance(DeleteServiceInstanceRequest request)
             throws OCDPServiceException {
+        String serviceInstanceId = request.getServiceInstanceId();
+        String planId = request.getPlanId();
+        ServiceInstance instance = repository.findOne(serviceInstanceId);
+        // Check service instance and plan id
+        if (instance == null) {
+            throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
+        }else if(! planId.equals(instance.getPlanId())){
+            throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
+        }
         DeleteServiceInstanceResponse response;
         OCDPServiceInstanceLifecycleService service = getOCDPServiceInstanceLifecycleService();
         if(request.isAsyncAccepted()){
-            Future<DeleteServiceInstanceResponse> responseFuture = service.doDeleteServiceInstanceAsync(request);
+            Future<DeleteServiceInstanceResponse> responseFuture = service.doDeleteServiceInstanceAsync(request, instance);
             this.instanceDeleteStateMap.put(request.getServiceInstanceId(), responseFuture);
             response = new DeleteServiceInstanceResponse().withAsync(true);
         } else {
-            response = service.doDeleteServiceInstance(request);
+            response = service.doDeleteServiceInstance(request, instance);
         }
         return response;
     }

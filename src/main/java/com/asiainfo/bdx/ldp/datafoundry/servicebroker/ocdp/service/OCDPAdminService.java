@@ -10,8 +10,6 @@ import java.util.Map;
  */
 public interface OCDPAdminService {
 
-    void authentication() throws Exception;
-
 	String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
                               String bindingId) throws Exception;
 
