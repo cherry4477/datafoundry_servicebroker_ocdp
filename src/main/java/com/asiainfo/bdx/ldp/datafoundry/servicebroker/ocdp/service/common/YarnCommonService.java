@@ -1,4 +1,4 @@
-package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
+package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.ambariClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
@@ -7,7 +7,6 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.OCDPServiceException;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.CapacitySchedulerConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl.HDFSAdminService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.YarnCapacityCaculater;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,7 +24,7 @@ import java.util.ArrayList;
 @Service
 public class YarnCommonService {
 
-    private Logger logger = LoggerFactory.getLogger(HDFSAdminService.class);
+    private Logger logger = LoggerFactory.getLogger(YarnCommonService.class);
 
     static final Gson gson = new GsonBuilder().create();
 
@@ -42,6 +41,7 @@ public class YarnCommonService {
 
     private YarnCapacityCaculater capacityCaculater;
 
+    @Autowired
     public YarnCommonService(ClusterConfig clusterConfig){
         this.clusterConfig = clusterConfig;
 

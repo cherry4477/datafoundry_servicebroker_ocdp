@@ -3,7 +3,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.YarnCommonService;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common.YarnCommonService;
 import com.google.gson.internal.LinkedTreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.Map;
 @Service
 public class MapReduceAdminService implements OCDPAdminService{
 
-    private Logger logger = LoggerFactory.getLogger(HDFSAdminService.class);
+    private Logger logger = LoggerFactory.getLogger(MapReduceAdminService.class);
 
     @Autowired
     private ApplicationContext context;
@@ -85,6 +85,7 @@ public class MapReduceAdminService implements OCDPAdminService{
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getYarnRMHost());
+                put("resource", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };

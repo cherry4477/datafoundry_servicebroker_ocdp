@@ -39,8 +39,9 @@ public class ambariClient {
     private CloseableHttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
+    //@Autowired
+    //private ApplicationContext appContext;
     @Autowired
-    private ApplicationContext appContext;
     private ClusterConfig config;
 
     static final Gson gson = new GsonBuilder().create();
@@ -64,7 +65,7 @@ public class ambariClient {
         context.setCredentialsProvider(provider);
         context.setAuthCache(authCache);
         this.context = context;
-        this.config = (ClusterConfig)this.appContext.getBean("clusterConfig");
+        //this.config = (ClusterConfig)this.appContext.getBean("clusterConfig");
     }
 
     private String getCapacitySchedulerTag(String rmHost){
