@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.google.gson.*;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 
 @Configuration
 public class CatalogConfig {
@@ -27,17 +29,6 @@ public class CatalogConfig {
         return new Catalog(
                 this.getServiceDefinitions()
         );
-    }
-
-    private Catalog getServiceCatalog(){
-        Catalog catalog = null;
-        ClusterConfig clusterConfig = (ClusterConfig)this.context.getBean("clusterConfig");
-        etcdClient etcdClient = clusterConfig.getEtcdClient();
-        String catalogString = etcdClient.readToString("/servicebroker/ocdp/catalog");
-        if (catalogString != null){
-            catalog = gson.fromJson(catalogString, Catalog.class);
-        }
-        return catalog;
     }
 
     public ServiceDefinition getServiceDefinition(String serviceDefinitionId){
@@ -68,6 +59,48 @@ public class CatalogConfig {
         return plan;
     }
 
+    private Catalog getServiceCatalog(){
+        Catalog catalog = null;
+        ClusterConfig clusterConfig = (ClusterConfig)this.context.getBean("clusterConfig");
+        etcdClient etcdClient = clusterConfig.getEtcdClient();
+        List<ServiceDefinition> sds = new ArrayList<>();
+        for(String id : OCDPAdminServiceMapper.getOCDPServiceIds()){
+            if (etcdClient.read("/servicebroker/ocdp/catalog/" + id) == null){
+                continue;
+            }
+            String name = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/name");
+            String description = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/description");
+            String bindable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/bindable");
+            //String planupdatable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/planupdatable");
+            //String tags = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/tags");
+            //String metadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/metadata");
+            String planId = OCDPAdminServiceMapper.getOCDPServicePlan(id);
+            String planName = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/name");
+            String planDescription = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/description");
+            String planFree = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/free");
+            String planMetadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/metadata");
+            PlanMetadata planMetadataObj = gson.fromJson(planMetadata, PlanMetadata.class);
+            Map<String, Object> planMetadataMap = new HashMap<String, Object>() {
+                {
+                    put("costs", planMetadataObj.getCosts());
+                    put("bullets", planMetadataObj.getBullets());
+                }
+            };
+            Plan plan = new Plan(planId, planName, planDescription, planMetadataMap, Boolean.getBoolean(planFree));
+            List<Plan> plans = new ArrayList<Plan>(){
+                {
+                    add(plan);
+                }
+            };
+            ServiceDefinition sd = new ServiceDefinition(id, name, description, Boolean.getBoolean(bindable), plans);
+            sds.add(sd);
+        }
+        if (sds.size() != 0){
+            catalog = new Catalog(sds);
+        }
+        return catalog;
+    }
+
     private List<ServiceDefinition> getServiceDefinitions() {
         ArrayList<ServiceDefinition> serviceDefinitions = new ArrayList<ServiceDefinition>();
         Catalog catalog = getServiceCatalog();
@@ -76,4 +109,5 @@ public class CatalogConfig {
         }
         return serviceDefinitions;
     }
+
 }
