@@ -154,7 +154,7 @@ public class rangerClient {
         RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
         rp.addResources("table", tablesList, false);
         rp.addResources("column-family", columnFamiliesList, false);
-        rp.addResources("columns", columnsList, false);
+        rp.addResources("column", columnsList, false);
         rp.addPolicyItems(userList,groupList,conditions,false,types);
         String newPolicyString = this.createV2Policy(rp);
         if (newPolicyString != null){
