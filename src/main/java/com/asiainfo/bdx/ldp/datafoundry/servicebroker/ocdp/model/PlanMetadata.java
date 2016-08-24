@@ -24,7 +24,7 @@ public class PlanMetadata {
     class Costs{
         @JsonSerialize
         @JsonProperty("amount")
-        Map<String, String> amount;
+        Map<String, Float> amount;
 
         @JsonSerialize
         @JsonProperty("unit")
