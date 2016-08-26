@@ -3,6 +3,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -26,6 +27,7 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminServ
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -187,12 +189,13 @@ public class HBaseAdminService implements OCDPAdminService{
         CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");
         Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
         Map<String, Object> metadata = plan.getMetadata();
-        String maximumTableQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("HBase Maximun Tables");
-        String maximunRegionQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("HBase Maximun Regions");
+        List<String> bullets = (ArrayList)metadata.get("bullets");
+        String[] maximumTableQuota = (bullets.get(0)).split(":");
+        String[] maximunRegionQuota = (bullets.get(1)).split(":");
         return new HashMap<String, String>(){
             {
-                put("maximumTableQuota", maximumTableQuota);
-                put("maximunRegionQuota", maximunRegionQuota);
+                put("maximumTableQuota", maximumTableQuota[1]);
+                put("maximunRegionQuota", maximunRegionQuota[1]);
             }
         };
     }

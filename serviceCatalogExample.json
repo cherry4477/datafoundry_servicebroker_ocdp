@@ -10,7 +10,7 @@
         "description":"This is a default hdfs plan.  All services are created equally.",
         "metadata":{
           "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
-          "bullets":[{"Name Space Quota": "1000", "Storage Space Quota": "20"}]
+          "bullets":["Name Space Quota:1000", "Storage Space Quota:20"]
         },
         "free":false
       }],
@@ -34,7 +34,7 @@
         "description":"This is a default hbase plan.  All services are created equally.",
         "metadata":{
           "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
-          "bullets":[{"HBase Maximun Tables":"10","HBase Maximun Regions":"10"}]},
+          "bullets":["HBase Maximun Tables:10","HBase Maximun Regions:10"]},
         "free":false}],
     "tags":["hbase","document"],
     "metadata":{
@@ -56,7 +56,7 @@
         "description":"This is a default hive plan.  All services are created equally.",
         "metadata":{
           "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
-          "bullets":["Shared hive instance","20 GB Storage (not enforced)"]},
+          "bullets":["Shared hive instance:20 GB Storage (not enforced)"]},
         "free":false}],
     "tags":["hive","document"],
     "metadata":{
@@ -78,7 +78,7 @@
         "description":"This is a default mapreduce plan.  All services are created equally.",
         "metadata":{
           "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
-          "bullets":["Shared yarn instance","20 GB Storage (not enforced)"]},
+          "bullets":["Yarn Queue Quota (GB):1"]},
         "free":false}],
     "tags":["mapreduce","document"],
     "metadata":{
@@ -100,7 +100,7 @@
         "description":"This is a default spark plan.  All services are created equally.",
         "metadata":{
           "costs":[{"amount":{"usd":0.0},"unit":"MONTHLY"}],
-          "bullets":["Shared yarn instance","20 GB Storage (not enforced)"]},
+          "bullets":["Yarn Queue Quota (GB):1","Hive Database:1"]},
         "free":false}],
     "tags":["Spark","document"],
     "metadata":{

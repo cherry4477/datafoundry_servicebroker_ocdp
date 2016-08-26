@@ -18,7 +18,7 @@ public class PlanMetadata {
 
     @JsonSerialize
     @JsonProperty("bullets")
-    List<Map<String, String>> bullets;
+    List<String> bullets;
 
     @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
     class Costs{
@@ -32,5 +32,5 @@ public class PlanMetadata {
     }
 
     public List<Costs> getCosts(){ return this.costs; }
-    public List<Map<String, String>> getBullets() { return this.bullets; }
+    public List<String> getBullets() { return this.bullets; }
 }
