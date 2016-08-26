@@ -2,6 +2,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common.HiveCommonService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common.YarnCommonService;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,10 +118,11 @@ public class SparkAdminService implements OCDPAdminService {
         CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");
         Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
         Map<String, Object> metadata = plan.getMetadata();
-        String yarnQueueQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("Yarn Queue Quota (GB)");
+        List<String> bullets = (ArrayList)metadata.get("bullets");
+        String[] yarnQueueQuota = (bullets.get(0)).split(":");
         return new HashMap<String, String>(){
             {
-                put("yarnQueueQuota", yarnQueueQuota);
+                put("yarnQueueQuota", yarnQueueQuota[1]);
             }
         };
     }

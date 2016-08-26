@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -8,6 +9,7 @@ import java.net.URI;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.cloud.servicebroker.model.Plan;
@@ -194,12 +196,13 @@ public class HDFSAdminService implements OCDPAdminService{
         CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");
         Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
         Map<String, Object> metadata = plan.getMetadata();
-        String nameSpaceQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("Name Space Quota");
-        String storageSpaceQuota = (String)((LinkedTreeMap)((ArrayList)metadata.get("bullets")).get(0)).get("Storage Space Quota (GB)");
+        List<String> bullets = (ArrayList)metadata.get("bullets");
+        String[] nameSpaceQuota = (bullets.get(0)).split(":");
+        String[] storageSpaceQuota = (bullets.get(1)).split(":");
         return new HashMap<String, Long>(){
             {
-                put("nameSpaceQuota", new Long(nameSpaceQuota));
-                put("storageSpaceQuota", new Long(storageSpaceQuota) * 1000000);
+                put("nameSpaceQuota", new Long(nameSpaceQuota[1]));
+                put("storageSpaceQuota", new Long(storageSpaceQuota[1]) * 1000000);
             }
         };
     }
