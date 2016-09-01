@@ -32,6 +32,8 @@ import org.apache.http.util.EntityUtils;
 import com.google.common.base.Splitter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Java Client for manipulate Apache Ranger.
@@ -44,6 +46,7 @@ public class rangerClient {
     private CloseableHttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
+    private Logger logger = LoggerFactory.getLogger(rangerClient.class);
 
     static final Gson gson = new GsonBuilder().create();
 
@@ -126,6 +129,8 @@ public class rangerClient {
             if(response.getStatusLine().getStatusCode() == 200)
             {
                 newPolicyString = EntityUtils.toString(response.getEntity(),"UTF-8");
+            }else{
+                logger.error("Ranger policy create fail due to: " + response.getStatusLine());
             }
             response.close();
         }catch (IOException e){
