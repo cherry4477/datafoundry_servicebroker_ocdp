@@ -135,7 +135,7 @@ public class HDFSAdminService implements OCDPAdminService{
         try{
             this.authentication();
             this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
-            this.dfs.delete(new Path(serviceInstanceResuorceName));
+            this.dfs.delete(new Path(serviceInstanceResuorceName), true);
             logger.info("Delete hdfs folder successful.");
         }catch (Exception e){
             logger.error("HDFS folder delete fail due to: " + e.getLocalizedMessage());
