@@ -78,7 +78,7 @@ public class HiveAdminService implements OCDPAdminService {
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHiveHost());
                 put("port", clusterConfig.getHivePort());
-                put("resource", serviceInstanceResource);
+                put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };

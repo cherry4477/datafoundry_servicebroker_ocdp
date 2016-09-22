@@ -151,7 +151,7 @@ public class OCDPServiceInstanceLifecycleService {
             }else{
                 logger.info("Ranger policy created.");
                 credentials.put("username", accountName);
-                credentials.put("resource", serviceInstanceResource);
+                credentials.put("name", serviceInstanceResource);
                 credentials.put("rangerPolicyId", policyId);
                 break;
             }
@@ -201,7 +201,7 @@ public class OCDPServiceInstanceLifecycleService {
 
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
         String accountName = Credential.get("username");
-        String serviceInstanceResource = Credential.get("resource");
+        String serviceInstanceResource = Credential.get("name");
         String policyId = Credential.get("rangerPolicyId");
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
