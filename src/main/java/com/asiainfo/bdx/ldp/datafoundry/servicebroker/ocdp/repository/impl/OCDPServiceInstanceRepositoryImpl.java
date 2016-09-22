@@ -48,13 +48,13 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
         String username = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/Credentials/username");
         String resource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
-                "/Credentials/resource");
+                "/Credentials/name");
         String rangerPolicyId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/Credentials/rangerPolicyId");
         Map<String, String> Credential = new HashMap<String, String>() {
             {
                 put("username", username);
-                put("resource", resource);
+                put("name", resource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };
@@ -76,8 +76,8 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
                 instance.getPlanId());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/username",
                 instance.getServiceInstanceCredentials().get("username"));
-        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/resource",
-                instance.getServiceInstanceCredentials().get("resource"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/name",
+                instance.getServiceInstanceCredentials().get("name"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/rangerPolicyId",
                 instance.getServiceInstanceCredentials().get("rangerPolicyId"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/dashboardUrl",

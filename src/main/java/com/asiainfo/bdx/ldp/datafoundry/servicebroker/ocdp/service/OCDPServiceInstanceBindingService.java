@@ -93,7 +93,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         Map<String, String> serviceInstanceCredentials = instance.getServiceInstanceCredentials();
         String policyId = serviceInstanceCredentials.get("rangerPolicyId");
-        String serviceInstanceResource = serviceInstanceCredentials.get("resource");
+        String serviceInstanceResource = serviceInstanceCredentials.get("name");
 
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String krbRealm = this.clusterConfig.getKrbRealm();

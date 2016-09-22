@@ -87,7 +87,7 @@ public class MapReduceAdminService implements OCDPAdminService{
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getYarnRMHost());
-                put("resource", serviceInstanceResource);
+                put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };

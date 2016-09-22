@@ -167,7 +167,7 @@ public class HBaseAdminService implements OCDPAdminService{
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHbaseZookeeperQuorum());
                 put("port", clusterConfig.getHbaseZookeeperClientPort());
-                put("resource", serviceInstanceResource);
+                put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };

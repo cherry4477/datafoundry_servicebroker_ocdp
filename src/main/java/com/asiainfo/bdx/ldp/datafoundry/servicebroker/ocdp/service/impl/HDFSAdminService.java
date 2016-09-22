@@ -174,7 +174,7 @@ public class HDFSAdminService implements OCDPAdminService{
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHdfsNameNode());
                 put("port", clusterConfig.getHdfsRpcPort());
-                put("resource", serviceInstanceResource);
+                put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };
