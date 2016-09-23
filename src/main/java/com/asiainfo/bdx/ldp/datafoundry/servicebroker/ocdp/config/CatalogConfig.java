@@ -71,9 +71,9 @@ public class CatalogConfig {
             String name = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/name");
             String description = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/description");
             String bindable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/bindable");
-            //String planupdatable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/planupdatable");
-            //String tags = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/tags");
-            //String metadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/metadata");
+            String planupdatable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/planupdatable");
+            String tags = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/tags");
+            String metadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/metadata");
             String planId = OCDPAdminServiceMapper.getOCDPServicePlan(id);
             String planName = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/name");
             String planDescription = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/description");
@@ -92,7 +92,10 @@ public class CatalogConfig {
                     add(plan);
                 }
             };
-            ServiceDefinition sd = new ServiceDefinition(id, name, description, Boolean.getBoolean(bindable), plans);
+            HashMap<String,Object> metadataMap = gson.fromJson(metadata, HashMap.class);
+            List<String> tagsList = Arrays.asList(tags.split(","));
+            //ServiceDefinition sd = new ServiceDefinition(id, name, description, Boolean.getBoolean(bindable), plans);
+            ServiceDefinition sd = new ServiceDefinition(id, name, description, Boolean.getBoolean(bindable), Boolean.getBoolean(planupdatable), plans, tagsList, metadataMap, null, null);
             sds.add(sd);
         }
         if (sds.size() != 0){
