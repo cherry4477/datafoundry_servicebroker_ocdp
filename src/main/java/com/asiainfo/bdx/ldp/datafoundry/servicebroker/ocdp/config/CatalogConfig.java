@@ -1,5 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import org.springframework.cloud.servicebroker.model.Catalog;
@@ -70,6 +72,8 @@ public class CatalogConfig {
             }
             String name = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/name");
             String description = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/description");
+            // Encoding for Chinese description
+            description = new String(description.getBytes(Charset.forName("ISO-8859-1")), Charset.forName("UTF-8"));
             String bindable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/bindable");
             String planupdatable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/planupdatable");
             String tags = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/tags");
@@ -77,6 +81,7 @@ public class CatalogConfig {
             String planId = OCDPAdminServiceMapper.getOCDPServicePlan(id);
             String planName = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/name");
             String planDescription = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/description");
+            planDescription = new String(planDescription.getBytes(Charset.forName("ISO-8859-1")), Charset.forName("UTF-8"));
             String planFree = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/free");
             String planMetadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/metadata");
             PlanMetadata planMetadataObj = gson.fromJson(planMetadata, PlanMetadata.class);
