@@ -152,7 +152,7 @@ public class OCDPServiceInstanceLifecycleService {
                 }
             }else{
                 logger.info("Ranger policy created.");
-                credentials.put("username", accountName);
+                credentials.put("username", pn);
                 credentials.put("password", pwd);
                 credentials.put("keytab", keyTabString);
                 credentials.put("name", serviceInstanceResource);

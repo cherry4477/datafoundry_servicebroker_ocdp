@@ -67,6 +67,8 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String hdfs_rpcPort;
 
+    private String hdfs_port;
+
     private String hdfs_superUser;
 
     private String hdfs_userKeytab;
@@ -138,6 +140,7 @@ public class ClusterConfig implements EnvironmentAware{
         this.ranger_pwd = env.getProperty("RANGER_ADMIN_PASSWORD");
         this.hdfs_nameNode = env.getProperty("HDFS_NAME_NODE");
         this.hdfs_rpcPort = env.getProperty("HDFS_RPC_PORT");
+        this.hdfs_port = env.getProperty("HDFS_PORT");
         this.hdfs_superUser = env.getProperty("HDFS_SUPER_USER");
         this.hdfs_userKeytab = env.getProperty("HDFS_USER_KEYTAB");
         this.hbase_masterUrl = env.getProperty("HBASE_MASTER_URL");
@@ -186,6 +189,7 @@ public class ClusterConfig implements EnvironmentAware{
 
     public String getHdfsNameNode() { return this.hdfs_nameNode;}
     public String getHdfsRpcPort() { return this.hdfs_rpcPort; }
+    public String getHdfsPort() { return this.hdfs_port; }
     public String getHdfsSuperUser() { return this.hdfs_superUser; }
     public String getHdfsUserKeytab() { return this.hdfs_userKeytab; }
 
