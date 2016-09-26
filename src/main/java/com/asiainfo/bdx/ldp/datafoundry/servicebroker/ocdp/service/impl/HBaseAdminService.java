@@ -161,7 +161,7 @@ public class HBaseAdminService implements OCDPAdminService{
         return new HashMap<String, Object>(){
             {
                 put("uri", clusterConfig.getHbaseZookeeperQuorum() + ":" +
-                        clusterConfig.getHbaseZookeeperClientPort() + ":/" + clusterConfig.getHbaseZookeeperZnodeParent());
+                        clusterConfig.getHbaseZookeeperClientPort() + ":" + clusterConfig.getHbaseZookeeperZnodeParent());
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
