@@ -58,6 +58,8 @@ public class HDFSAdminService implements OCDPAdminService{
 
     private String hdfsRPCUrl;
 
+    private String webHdfsUrl;
+
     @Autowired
     public HDFSAdminService(ClusterConfig clusterConfig){
         this.clusterConfig = clusterConfig;
@@ -74,6 +76,7 @@ public class HDFSAdminService implements OCDPAdminService{
         System.setProperty("java.security.krb5.conf", clusterConfig.getKrb5FilePath());
 
         this.hdfsRPCUrl = "hdfs://" + this.clusterConfig.getHdfsNameNode() + ":" + this.clusterConfig.getHdfsRpcPort();
+        this.webHdfsUrl = "http://" + this.clusterConfig.getHdfsNameNode() + ":" + this.clusterConfig.getHdfsPort() + "/webhdfs/v1";
     }
 
     private void authentication() throws Exception{
@@ -160,7 +163,7 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public String getDashboardUrl(){
         // Todo: should support multi-tent in future, each account can only see HDFS folders which belong to themself.
-        return "http://" + this.clusterConfig.getHdfsNameNode() + ":50070";
+        return "http://" + this.clusterConfig.getHdfsNameNode() + this.clusterConfig.getHdfsPort();
     }
 
     @Override
@@ -168,12 +171,12 @@ public class HDFSAdminService implements OCDPAdminService{
                                                        String serviceInstanceResource, String rangerPolicyId){
         return new HashMap<String, Object>(){
             {
-                put("uri", hdfsRPCUrl + serviceInstanceResource);
+                put("uri", webHdfsUrl + serviceInstanceResource);
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHdfsNameNode());
-                put("port", clusterConfig.getHdfsRpcPort());
+                put("port", clusterConfig.getHdfsPort());
                 put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }
@@ -202,7 +205,7 @@ public class HDFSAdminService implements OCDPAdminService{
         return new HashMap<String, Long>(){
             {
                 put("nameSpaceQuota", new Long(nameSpaceQuota[1]));
-                put("storageSpaceQuota", new Long(storageSpaceQuota[1]) * 1000000);
+                put("storageSpaceQuota", new Long(storageSpaceQuota[1]) * 1000000000);
             }
         };
     }
