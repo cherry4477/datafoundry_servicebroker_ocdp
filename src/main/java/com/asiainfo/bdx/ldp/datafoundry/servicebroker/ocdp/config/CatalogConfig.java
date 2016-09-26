@@ -78,9 +78,11 @@ public class CatalogConfig {
             String planupdatable = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/planupdatable");
             String tags = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/tags");
             String metadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/metadata");
+            metadata = new String(metadata.getBytes(Charset.forName("ISO-8859-1")), Charset.forName("UTF-8"));
             String planId = OCDPAdminServiceMapper.getOCDPServicePlan(id);
             String planName = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/name");
             String planDescription = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/description");
+            // Encoding for Chinese description
             planDescription = new String(planDescription.getBytes(Charset.forName("ISO-8859-1")), Charset.forName("UTF-8"));
             String planFree = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/free");
             String planMetadata = etcdClient.readToString("/servicebroker/ocdp/catalog/" + id + "/plan/" + planId + "/metadata");

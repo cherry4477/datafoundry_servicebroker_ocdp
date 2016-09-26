@@ -47,6 +47,10 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
                 dashboardUrl);
         String username = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/Credentials/username");
+        String password = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
+                "/Credentials/password");
+        String keytab = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
+                "/Credentials/keytab");
         String resource = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
                 "/Credentials/name");
         String rangerPolicyId = etcdClient.readToString("/servicebroker/ocdp/instance/" + serviceInstanceId +
@@ -54,6 +58,8 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
         Map<String, String> Credential = new HashMap<String, String>() {
             {
                 put("username", username);
+                put("password", password);
+                put("keytab", keytab);
                 put("name", resource);
                 put("rangerPolicyId", rangerPolicyId);
             }
@@ -76,6 +82,10 @@ public class OCDPServiceInstanceRepositoryImpl implements OCDPServiceInstanceRep
                 instance.getPlanId());
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/username",
                 instance.getServiceInstanceCredentials().get("username"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/password",
+                instance.getServiceInstanceCredentials().get("password"));
+        etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/keytab",
+                instance.getServiceInstanceCredentials().get("keytab"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/name",
                 instance.getServiceInstanceCredentials().get("name"));
         etcdClient.write("/servicebroker/ocdp/instance/" + serviceInstanceId + "/Credentials/rangerPolicyId",

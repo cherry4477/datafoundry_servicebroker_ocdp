@@ -168,7 +168,7 @@ public class HDFSAdminService implements OCDPAdminService{
                                                        String serviceInstanceResource, String rangerPolicyId){
         return new HashMap<String, Object>(){
             {
-                put("uri", hdfsRPCUrl + "/" + serviceInstanceResource);
+                put("uri", hdfsRPCUrl + serviceInstanceResource);
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
