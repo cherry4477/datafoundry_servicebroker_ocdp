@@ -77,11 +77,11 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 	public CreateServiceInstanceBindingResponse createServiceInstanceBinding(CreateServiceInstanceBindingRequest request)
             throws OCDPServiceException {
         String serviceDefinitionId = request.getServiceDefinitionId();
-		String bindingId = request.getBindingId();
-		String serviceInstanceId = request.getServiceInstanceId();
+        String bindingId = request.getBindingId();
+        String serviceInstanceId = request.getServiceInstanceId();
         ServiceInstanceBinding binding = bindingRepository.findOne(serviceInstanceId, bindingId);
         if (binding != null) {
-           throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
+            throw new ServiceInstanceBindingExistsException(serviceInstanceId, bindingId);
         }
         String planId = request.getPlanId();
         if(! planId.equals(OCDPAdminServiceMapper.getOCDPServicePlan(serviceDefinitionId))){
@@ -92,6 +92,51 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             throw new ServiceInstanceDoesNotExistException(serviceInstanceId);
         }
         Map<String, String> serviceInstanceCredentials = instance.getServiceInstanceCredentials();
+        String appGuid = request.getBoundAppGuid();
+        return createServiceInstanceBindingWithProvisionUser(
+                serviceDefinitionId, bindingId, serviceInstanceId, planId, appGuid, serviceInstanceCredentials);
+	}
+
+    /**
+     * Create service instance binding by reuse provsion user
+     * @param serviceDefinitionId
+     * @param bindingId
+     * @param serviceInstanceId
+     * @param planId
+     * @param appGuid
+     * @param serviceInstanceCredentials
+     * @return
+     */
+    private CreateServiceInstanceBindingResponse createServiceInstanceBindingWithProvisionUser(
+            String serviceDefinitionId, String bindingId, String serviceInstanceId, String planId, String appGuid, Map<String, String> serviceInstanceCredentials){
+        OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
+
+        // Save service instance binding
+        Map<String, Object> credentials = ocdp.generateCredentialsInfo(
+                serviceInstanceCredentials.get("username"),
+                serviceInstanceCredentials.get("password"),
+                serviceInstanceCredentials.get("keytab"),
+                serviceInstanceCredentials.get("name"),
+                serviceInstanceCredentials.get("rangerPolicyId"));
+        ServiceInstanceBinding binding = new ServiceInstanceBinding(
+                bindingId, serviceInstanceId, credentials, null, appGuid, planId);
+        bindingRepository.save(binding);
+
+        return new CreateServiceInstanceAppBindingResponse().withCredentials(credentials);
+    }
+
+    /**
+     * Create service instance binding by create new binding user
+     * @param serviceDefinitionId
+     * @param bindingId
+     * @param serviceInstanceId
+     * @param planId
+     * @param appGuid
+     * @param serviceInstanceCredentials
+     * @return
+     */
+    private CreateServiceInstanceBindingResponse createServiceInstanceBindingWithNewUsr(
+            String serviceDefinitionId, String bindingId, String serviceInstanceId, String planId, String appGuid, Map<String, String> serviceInstanceCredentials){
         String policyId = serviceInstanceCredentials.get("rangerPolicyId");
         String serviceInstanceResource = serviceInstanceCredentials.get("name");
 
@@ -166,14 +211,14 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }
         // Save service instance binding
         Map<String, Object> credentials = ocdp.generateCredentialsInfo(
-                                   accountName, pwd, keyTabString, serviceInstanceResource, policyId);
-        binding = new ServiceInstanceBinding(
-                bindingId, serviceInstanceId, credentials, null, request.getBoundAppGuid(), planId);
+                accountName, pwd, keyTabString, serviceInstanceResource, policyId);
+        ServiceInstanceBinding binding = new ServiceInstanceBinding(
+                bindingId, serviceInstanceId, credentials, null, appGuid, planId);
         bindingRepository.save(binding);
 
         credentials.remove("rangerPolicyId");
         return new CreateServiceInstanceAppBindingResponse().withCredentials(credentials);
-	}
+    }
 
 	@Override
 	public void deleteServiceInstanceBinding(DeleteServiceInstanceBindingRequest request)
@@ -188,8 +233,26 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         }else if(! planId.equals(binding.getPlanId())){
             throw new ServiceBrokerInvalidParametersException("Unknown plan id: " + planId);
         }
+        deleteServiceInstancceBindingWithoutUser(serviceInstanceId, bindingId);
+    }
 
-        Map<String, Object> credentials = binding.getCredentials();
+    /**
+     * Only delete service instance binding info from repository/etcd
+     * @param serviceInstanceId
+     * @param bindingId
+     */
+    private void deleteServiceInstancceBindingWithoutUser(String serviceInstanceId, String bindingId){
+        bindingRepository.delete(serviceInstanceId, bindingId);
+    }
+
+    /**
+     * Delete binding LDAP user/princ, remove binding user from ranger policy, delete service instance binding info
+     * @param serviceDefinitionId
+     * @param serviceInstanceId
+     * @param bindingId
+     * @param credentials
+     */
+    private void deleteServiceInstanceBindingWithUser(String serviceDefinitionId, String serviceInstanceId, String bindingId, Map<String, Object> credentials){
         String accountName = (String)credentials.get("username");
         String policyId = (String)credentials.get("rangerPolicyId");
         String ldapGroupName = this.clusterConfig.getLdapGroup();

@@ -98,8 +98,10 @@ public class OCDPServiceInstanceLifecycleService {
         logger.info("create kerberos principal.");
         String pn = accountName + "@" + krbRealm;
         String pwd = UUID.randomUUID().toString();
+        String keyTabString;
         try{
             this.kc.createPrincipal(pn, pwd);
+            keyTabString = this.kc.createKeyTabString(pn, pwd, null);
         }catch(KerberosOperationException e){
             logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -151,6 +153,8 @@ public class OCDPServiceInstanceLifecycleService {
             }else{
                 logger.info("Ranger policy created.");
                 credentials.put("username", accountName);
+                credentials.put("password", pwd);
+                credentials.put("keytab", keyTabString);
                 credentials.put("name", serviceInstanceResource);
                 credentials.put("rangerPolicyId", policyId);
                 break;
