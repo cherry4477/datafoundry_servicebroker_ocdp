@@ -28,6 +28,8 @@ import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
@@ -36,6 +38,7 @@ import org.springframework.context.ApplicationContext;
  */
 public class ambariClient {
 
+    private Logger logger = LoggerFactory.getLogger(ambariClient.class);
     private CloseableHttpClient httpClient;
     private HttpClientContext context;
     private URI baseUri;
@@ -75,6 +78,7 @@ public class ambariClient {
         HttpGet request = new HttpGet(uri);
 
         String jsonStr = excuteRequest(request);
+        logger.info("Version tag json: " + jsonStr);
 
         return getVersionTagfromJson(jsonStr);
     }
@@ -212,6 +216,7 @@ public class ambariClient {
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<Map<?, ?>>() {
             }.getType();
             response = gson.fromJson(jsonStr, type);
+            logger.info("response: " + response);
 
             LinkedTreeMap<?,?> firstLevel = (LinkedTreeMap<?, ?>) response.get("HostRoles");
             LinkedTreeMap<?,?> secondLevel = (LinkedTreeMap<?, ?>) firstLevel.get("actual_configs");
