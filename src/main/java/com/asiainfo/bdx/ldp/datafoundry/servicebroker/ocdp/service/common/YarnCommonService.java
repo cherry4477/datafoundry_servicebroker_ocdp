@@ -58,9 +58,7 @@ public class YarnCommonService {
         String provisionedQueue;
         String queuePath = null;
         try {
-            logger.info("RM host: " + clusterConfig.getYarnRMHost());
             csConfig = ambClient.getCapacitySchedulerConfig(clusterConfig.getYarnRMHost());
-            logger.info("Capacity scheduler config: " + csConfig);
             CapacitySchedulerConfig csActualConfig = gson.fromJson(csConfig, CapacitySchedulerConfig.class);
             yClient.getClusterMetrics();
             clusterTotalMemory = yClient.getTotalMemory();

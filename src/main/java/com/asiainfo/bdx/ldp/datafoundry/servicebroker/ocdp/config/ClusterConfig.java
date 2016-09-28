@@ -105,6 +105,8 @@ public class ClusterConfig implements EnvironmentAware{
     //Hadoop Yarn Resource Manager properties
     private String yarn_rm_host;
 
+    private String yarn_rm_port;
+
     private String yarn_rm_url;
 
     private String yarn_superUser;
@@ -157,6 +159,7 @@ public class ClusterConfig implements EnvironmentAware{
         this.ambari_adminUser = env.getProperty("AMBARI_ADMIN_USER");
         this.ambari_adminPwd = env.getProperty("AMBARI_ADMIN_PWD");
         this.yarn_rm_host = env.getProperty("YARN_RESOURCEMANAGER_HOST");
+        this.yarn_rm_port = env.getProperty("YARN_RESOURCEMANAGER_PORT");
         this.yarn_rm_url = env.getProperty("YARN_RESOURCEMANAGER_URL");
         this.yarn_superUser = env.getProperty("YARN_SUPER_USER");
         this.yarn_superUserKeytab = env.getProperty("YARN_SUPER_USER_KEYTAB");
@@ -210,6 +213,7 @@ public class ClusterConfig implements EnvironmentAware{
     public String getAmbari_adminPwd(){return this.ambari_adminPwd;}
 
     public String getYarnRMHost(){return this.yarn_rm_host;}
+    public String getYarnRMPort() { return this.yarn_rm_port; }
     public String getYarnRMUrl(){return this.yarn_rm_url;}
     public String getYarnSuperUser(){return this.yarn_superUser;}
     public String getYarnSuperUserKeytab(){return this.yarn_superUserKeytab;}
