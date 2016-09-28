@@ -76,6 +76,7 @@ public class ambariClient {
         URI uri = buildUri("api/v1/clusters/" + this.config.getClusterName() + "/hosts",rmHost,
                 "/host_components/RESOURCEMANAGER?fields=HostRoles/actual_configs/capacity-scheduler");
         HttpGet request = new HttpGet(uri);
+        logger.info("GET url: " + uri);
 
         String jsonStr = excuteRequest(request);
         logger.info("Version tag json: " + jsonStr);
