@@ -76,10 +76,8 @@ public class ambariClient {
         URI uri = buildUri("api/v1/clusters/" + this.config.getClusterName() + "/hosts",rmHost,
                 "/host_components/RESOURCEMANAGER?fields=HostRoles/actual_configs/capacity-scheduler");
         HttpGet request = new HttpGet(uri);
-        logger.info("GET url: " + uri);
 
         String jsonStr = excuteRequest(request);
-        logger.info("Version tag json: " + jsonStr);
 
         return getVersionTagfromJson(jsonStr);
     }
@@ -217,7 +215,6 @@ public class ambariClient {
             java.lang.reflect.Type type = new com.google.gson.reflect.TypeToken<Map<?, ?>>() {
             }.getType();
             response = gson.fromJson(jsonStr, type);
-            logger.info("response: " + response);
 
             LinkedTreeMap<?,?> firstLevel = (LinkedTreeMap<?, ?>) response.get("HostRoles");
             LinkedTreeMap<?,?> secondLevel = (LinkedTreeMap<?, ?>) firstLevel.get("actual_configs");
