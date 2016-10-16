@@ -3,17 +3,16 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.BrokerUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -60,20 +59,11 @@ public class HiveCommonService {
                 "/default;principal=" + this.clusterConfig.getHiveSuperUser();
     }
 
-    private void authentication(){
-        UserGroupInformation.setConfiguration(this.conf);
-        try{
-            UserGroupInformation.loginUserFromKeytab(
-                    this.clusterConfig.getHiveSuperUser(), this.clusterConfig.getHiveSuperUserKeytab());
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
     public String createDatabase(String serviceInstanceId) throws Exception{
         String databaseName = serviceInstanceId.replaceAll("-", "");
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHiveSuperUser(), this.clusterConfig.getHiveSuperUserKeytab());
             Class.forName(this.driverName);
             this.conn = DriverManager.getConnection(this.hiveJDBCUrl);
             Statement stmt = conn.createStatement();
@@ -112,7 +102,8 @@ public class HiveCommonService {
 
     public void deleteDatabase(String dbName) throws Exception{
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHiveSuperUser(), this.clusterConfig.getHiveSuperUserKeytab());
             Class.forName(this.driverName);
             this.conn = DriverManager.getConnection(this.hiveJDBCUrl);
             Statement stmt = conn.createStatement();
