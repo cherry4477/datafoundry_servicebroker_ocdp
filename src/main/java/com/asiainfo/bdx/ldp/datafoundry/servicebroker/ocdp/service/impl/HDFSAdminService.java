@@ -9,7 +9,6 @@ import java.net.URI;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.springframework.cloud.servicebroker.model.Plan;
@@ -18,14 +17,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.*;
 
-import com.google.gson.internal.LinkedTreeMap;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,21 +77,12 @@ public class HDFSAdminService implements OCDPAdminService{
         this.webHdfsUrl = "http://" + this.clusterConfig.getHdfsNameNode() + ":" + this.clusterConfig.getHdfsPort() + "/webhdfs/v1";
     }
 
-    private void authentication() throws Exception{
-        UserGroupInformation.setConfiguration(this.conf);
-        try{
-            UserGroupInformation.loginUserFromKeytab(
-                    this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
         String pathName;
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
             this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
             if(bindingId == null){
                 pathName = "/servicebroker/" + serviceInstanceId;
@@ -136,7 +125,8 @@ public class HDFSAdminService implements OCDPAdminService{
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName) throws Exception{
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
             this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
             this.dfs.delete(new Path(serviceInstanceResuorceName), true);
             logger.info("Delete hdfs folder successful.");

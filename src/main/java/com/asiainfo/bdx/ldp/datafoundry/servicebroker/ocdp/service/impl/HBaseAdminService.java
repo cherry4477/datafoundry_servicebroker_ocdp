@@ -3,11 +3,9 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.rangerClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
-import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.PlanMetadata;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.RangerV2Policy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.internal.LinkedTreeMap;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.springframework.cloud.servicebroker.model.Plan;
@@ -15,7 +13,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -23,6 +20,7 @@ import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,22 +66,13 @@ public class HBaseAdminService implements OCDPAdminService{
         conf.set(HConstants.ZOOKEEPER_ZNODE_PARENT, this.clusterConfig.getHbaseZookeeperZnodeParent());
     }
 
-    private void authentication(){
-        UserGroupInformation.setConfiguration(this.conf);
-        try{
-            UserGroupInformation.loginUserFromKeytab(
-                    this.clusterConfig.getHbaseMasterPrincipal(), this.clusterConfig.getHbaseMasterUserKeytab());
-        }catch (IOException e){
-            e.printStackTrace();
-        }
-    }
-
     @Override
     public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
         String nsName = serviceInstanceId.replaceAll("-", "");
         Map<String, String> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHbaseMasterPrincipal(), this.clusterConfig.getHbaseMasterUserKeytab());
             this.connection = ConnectionFactory.createConnection(conf);
             Admin admin = this.connection.getAdmin();
             NamespaceDescriptor namespaceDescriptor = NamespaceDescriptor.create(nsName).build();
@@ -123,7 +112,8 @@ public class HBaseAdminService implements OCDPAdminService{
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName) throws Exception{
         try{
-            this.authentication();
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHbaseMasterPrincipal(), this.clusterConfig.getHbaseMasterUserKeytab());
             this.connection = ConnectionFactory.createConnection(conf);
             Admin admin = this.connection.getAdmin();
             admin.deleteNamespace(serviceInstanceResuorceName);
@@ -160,8 +150,7 @@ public class HBaseAdminService implements OCDPAdminService{
                                                        String serviceInstanceResource, String rangerPolicyId){
         return new HashMap<String, Object>(){
             {
-                put("uri", clusterConfig.getHbaseZookeeperQuorum() + ":" +
-                        clusterConfig.getHbaseZookeeperClientPort() + ":" + clusterConfig.getHbaseZookeeperZnodeParent());
+                put("uri", clusterConfig.getHbaseRestUrl());
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
