@@ -52,11 +52,11 @@ public class SparkAdminService implements OCDPAdminService {
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, final String resourceName, String accountName, String groupName) {
+    public String assignPermissionToResources(String policyName, final List<String> resources, String accountName, String groupName) {
         logger.info("Assign permissions for yarn queue and hive database.");
-        String[] resources = resourceName.split(":");
-        String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resources[0], accountName, groupName);
-        String hiveId = this.hiveCommonService.assignPermissionToDatabase(policyName, resources[1], accountName, groupName);
+        String[] resourcesList = resources.get(0).split(":");
+        String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resourcesList[0], accountName, groupName);
+        String hiveId = this.hiveCommonService.assignPermissionToDatabase(policyName, resourcesList[1], accountName, groupName);
         // return yarn policy id and hive policy id, because spark need both resources
         return yarnPolicyId + ":" + hiveId;
     }

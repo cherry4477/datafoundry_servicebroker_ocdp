@@ -46,9 +46,9 @@ public class MapReduceAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, final String resourceName, String accountName, String groupName) {
+    public String assignPermissionToResources(String policyName, final List<String> resources, String accountName, String groupName) {
         logger.info("Assign submit-app/admin-queue permission to yarn queue.");
-        return this.yarnCommonService.assignPermissionToQueue(policyName, resourceName, accountName, groupName);
+        return this.yarnCommonService.assignPermissionToQueue(policyName, resources.get(0), accountName, groupName);
     }
 
     @Override

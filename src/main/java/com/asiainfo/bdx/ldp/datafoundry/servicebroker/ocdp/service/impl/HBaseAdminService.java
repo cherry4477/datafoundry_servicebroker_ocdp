@@ -91,9 +91,8 @@ public class HBaseAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, List<String> tableList, String accountName, String groupName){
         logger.info("Assign read/write/create/admin permission to hbase namespace.");
-        ArrayList<String> nsList = new ArrayList<String>(){{add(resourceName + ":*");}};
         ArrayList<String> cfList = new ArrayList<String>(){{add("*");}};
         ArrayList<String> cList = new ArrayList<String>(){{add("*");}};
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
@@ -101,7 +100,7 @@ public class HBaseAdminService implements OCDPAdminService{
         ArrayList<String> types = new ArrayList<String>(){{add("read");add("write");add("create");add("admin");}};
         ArrayList<String> conditions = new ArrayList<String>();
         return this.rc.createHBasePolicy(policyName,"This is HBase Policy", clusterConfig.getClusterName()+"_hbase",
-                nsList, cfList, cList, groupList,userList,types,conditions);
+                tableList, cfList, cList, groupList,userList,types,conditions);
     }
 
     @Override
@@ -150,12 +149,12 @@ public class HBaseAdminService implements OCDPAdminService{
                                                        String serviceInstanceResource, String rangerPolicyId){
         return new HashMap<String, Object>(){
             {
-                put("uri", clusterConfig.getHbaseRestUrl());
+                put("uri", "http://" + clusterConfig.getHbaseMaster() + ":" + clusterConfig.getHbaseRestPort());
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
-                put("host", clusterConfig.getHbaseZookeeperQuorum());
-                put("port", clusterConfig.getHbaseZookeeperClientPort());
+                put("host", clusterConfig.getHbaseMaster());
+                put("port", clusterConfig.getHbaseRestPort());
                 put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
             }

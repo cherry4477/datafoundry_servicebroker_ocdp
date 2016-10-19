@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.OCDPAdminService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,12 +40,17 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, List<String> resources, String accountName, String groupName){
         logger.info("Assign select/update/create/drop/alter/index/lock/all permission to hive database.");
-        String hivePolicyId = this.hiveCommonService.assignPermissionToDatabase(policyName, resourceName, accountName, groupName);
+        String hivePolicyId = this.hiveCommonService.assignPermissionToDatabase(policyName, resources.get(0), accountName, groupName);
         logger.info("Create corresponding hdfs policy for hive tenant");
-        String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources(
-                "hdfs_" + policyName, "/apps/hive/warehouse/" + resourceName + ".db", accountName, groupName);
+        List<String> hdfsFolders = new ArrayList<String>(){
+            {
+                add("/apps/hive/warehouse/" + resources.get(0) + ".db");
+                add("/tmp/hive");
+            }
+        };
+        String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("hdfs_" + policyName, hdfsFolders, accountName, groupName);
         return hivePolicyId + ":" + hdfsPolicyId;
     }
 

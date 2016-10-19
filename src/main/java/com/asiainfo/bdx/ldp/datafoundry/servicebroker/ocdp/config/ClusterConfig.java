@@ -86,7 +86,9 @@ public class ClusterConfig implements EnvironmentAware{
 
     private String hbase_zookeeper_znodeParent;
 
-    private String hbase_restUrl;
+    private String hbase_master;
+
+    private String hbase_restPort;
 
     // Hadoop Hive connectivity properties
     private String hive_host;
@@ -153,7 +155,8 @@ public class ClusterConfig implements EnvironmentAware{
         this.hbase_zookeeper_quorum = env.getProperty("HBASE_ZOOKEEPER_QUORUM");
         this.hbase_zookeeper_clientPort = env.getProperty("HBASE_ZOOKEEPER_CLIENT_PORT");
         this.hbase_zookeeper_znodeParent = env.getProperty("HBASE_ZOOKEEPER_ZNODE_PARENT");
-        this.hbase_restUrl = env.getProperty("HBASE_REST_URL");
+        this.hbase_master = env.getProperty("HBASE_MASTER");
+        this.hbase_restPort = env.getProperty("HBASE_REST_PORT");
         this.hive_host = env.getProperty("HIVE_HOST");
         this.hive_port = env.getProperty("HIVE_PORT");
         this.hive_superUser = env.getProperty("HIVE_SUPER_USER");
@@ -205,7 +208,8 @@ public class ClusterConfig implements EnvironmentAware{
     public String getHbaseZookeeperQuorum() { return this.hbase_zookeeper_quorum; }
     public String getHbaseZookeeperClientPort() { return this.hbase_zookeeper_clientPort; }
     public String getHbaseZookeeperZnodeParent() { return this.hbase_zookeeper_znodeParent; }
-    public String getHbaseRestUrl() { return this.hbase_restUrl; }
+    public String getHbaseMaster() { return this.hbase_master; }
+    public String getHbaseRestPort() { return this.hbase_restPort; }
 
     public String getHiveHost() { return this.hive_host; }
     public String getHivePort() { return this.hive_port; }
