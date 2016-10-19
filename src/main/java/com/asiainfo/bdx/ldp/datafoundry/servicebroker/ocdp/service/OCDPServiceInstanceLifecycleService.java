@@ -1,6 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.lang.Thread;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
@@ -142,7 +143,7 @@ public class OCDPServiceInstanceLifecycleService {
         int i = 0;
         logger.info("Try to create ranger policy...");
         while(i++ <= 20){
-            policyId = ocdp.assignPermissionToResources(policyName, serviceInstanceResource, accountName, ldapGroupName);
+            policyId = ocdp.assignPermissionToResources(policyName, new ArrayList<String>(){{add(serviceInstanceResource);}}, accountName, ldapGroupName);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
             if (policyId == null){
                 try{

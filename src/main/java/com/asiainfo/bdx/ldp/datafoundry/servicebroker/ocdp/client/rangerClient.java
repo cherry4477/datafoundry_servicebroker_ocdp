@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -158,7 +159,12 @@ public class rangerClient {
                                     List<String> columnsList, List<String> groupList, List<String> userList, List<String> types, List<String> conditions){
         String policyId = null;
         RangerV2Policy rp = new RangerV2Policy(policyName,"",description,seviceName,true,true);
-        rp.addResources("table", tablesList, false);
+        ArrayList<String> nsList = new ArrayList<String>();
+        // Convert namespace name to 'ns:*'
+        for (String e : tablesList){
+            nsList.add(e + ":*");
+        }
+        rp.addResources("table", nsList, false);
         rp.addResources("column-family", columnFamiliesList, false);
         rp.addResources("column", columnsList, false);
         rp.addPolicyItems(userList,groupList,conditions,false,types);

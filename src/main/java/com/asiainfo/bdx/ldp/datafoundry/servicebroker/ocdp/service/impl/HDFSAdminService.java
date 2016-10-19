@@ -106,15 +106,14 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName){
+    public String assignPermissionToResources(String policyName, List<String> resources, String accountName, String groupName){
         logger.info("Assign read/write/execute permission to hdfs folder.");
-        ArrayList<String> pathList = new ArrayList<String>(){{add(resourceName);}};
         ArrayList<String> groupList = new ArrayList<String>(){{add(groupName);}};
         ArrayList<String> userList = new ArrayList<String>(){{add(accountName);}};
         ArrayList<String> types = new ArrayList<String>(){{add("read");add("write");add("execute");}};
-        ArrayList<String> conditions = new ArrayList<String>();
+        ArrayList<String> conditions = new ArrayList<>();
         return this.rc.createHDFSPolicy(policyName,"This is HDFS Policy",clusterConfig.getClusterName()+"_hadoop",
-                pathList, groupList,userList,types,conditions);
+                resources, groupList, userList,types,conditions);
     }
 
     @Override

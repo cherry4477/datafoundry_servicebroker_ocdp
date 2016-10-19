@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,7 +14,7 @@ public interface OCDPAdminService {
 	String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
                               String bindingId) throws Exception;
 
-    String assignPermissionToResources(String policyName, String resourceName, String accountName, String groupName);
+    String assignPermissionToResources(String policyName, List<String> resources, String accountName, String groupName);
 
     boolean appendUserToResourcePermission(String policyId, String groupName, String accountName);
 
