@@ -58,7 +58,7 @@ public class SparkAdminService implements OCDPAdminService {
         String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resourcesList[0], accountName, groupName);
         String hiveId = this.hiveCommonService.assignPermissionToDatabase(policyName, resourcesList[1], accountName, groupName);
         // return yarn policy id and hive policy id, because spark need both resources
-        return yarnPolicyId + ":" + hiveId;
+        return (yarnPolicyId != null && hiveId != null) ? yarnPolicyId + ":" + hiveId : null;
     }
 
     @Override

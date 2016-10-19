@@ -50,15 +50,17 @@ public class HiveAdminService implements OCDPAdminService {
                 add("/tmp/hive");
             }
         };
-        String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("hdfs_" + policyName, hdfsFolders, accountName, groupName);
-        return hivePolicyId + ":" + hdfsPolicyId;
+        String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("hive_" + policyName, hdfsFolders, accountName, groupName);
+
+        return (hivePolicyId != null && hdfsPolicyId != null) ? hivePolicyId + ":" + hdfsPolicyId : null;
     }
 
     @Override
     public boolean appendUserToResourcePermission(String policyId, String groupName, String accountName){
         String[] policyIds = policyId.split(";");
-        return this.hiveCommonService.appendUserToDatabasePermission(policyIds[0], groupName, accountName) &&
-                this.hdfsAdminService.appendUserToResourcePermission(policyIds[1], groupName, accountName);
+        boolean userAppendToHivePolicy = this.hiveCommonService.appendUserToDatabasePermission(policyIds[0], groupName, accountName);
+        boolean userAppendToHDFSPolicy = this.hdfsAdminService.appendUserToResourcePermission(policyIds[1], groupName, accountName);
+        return userAppendToHivePolicy && userAppendToHDFSPolicy;
     }
 
     @Override
@@ -70,15 +72,17 @@ public class HiveAdminService implements OCDPAdminService {
     public boolean unassignPermissionFromResources(String policyId){
         String[] policyIds = policyId.split(":");
         logger.info("Unassign select/update/create/drop/alter/index/lock/all permission to hive table.");
-        return this.hiveCommonService.unassignPermissionFromDatabase(policyIds[0]) &&
-                this.hdfsAdminService.unassignPermissionFromResources(policyIds[1]);
+        boolean hivePolicyDeleted = this.hiveCommonService.unassignPermissionFromDatabase(policyIds[0]);
+        boolean hdfsPolicyDeleted = this.hdfsAdminService.unassignPermissionFromResources(policyIds[1]);
+        return hivePolicyDeleted && hdfsPolicyDeleted;
     }
 
     @Override
     public boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName){
         String[] policyIds = policyId.split(":");
-        return this.hiveCommonService.removeUserFromDatabasePermission(policyIds[0], groupName, accountName) &&
-                this.hdfsAdminService.removeUserFromResourcePermission(policyIds[1], groupName, accountName);
+        boolean userRemovedFromHivePolicy = this.hiveCommonService.removeUserFromDatabasePermission(policyIds[0], groupName, accountName);
+        boolean userRemovedFromHDFSPolicy = this.hdfsAdminService.removeUserFromResourcePermission(policyIds[1], groupName, accountName);
+        return userRemovedFromHivePolicy && userRemovedFromHDFSPolicy;
     }
 
     @Override
