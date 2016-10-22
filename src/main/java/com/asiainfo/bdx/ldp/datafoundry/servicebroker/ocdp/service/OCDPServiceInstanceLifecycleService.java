@@ -6,13 +6,9 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Future;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.ldap.LdapName;
-
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.BrokerUtil;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceResponse;
 import org.springframework.cloud.servicebroker.model.DeleteServiceInstanceRequest;
@@ -31,7 +27,6 @@ import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
-import org.springframework.ldap.support.LdapNameBuilder;
 
 /**
  * OCDP impl to manage hadoop service instances.  Creating a service does the following:
@@ -86,9 +81,9 @@ public class OCDPServiceInstanceLifecycleService {
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
-        String accountName = "serviceinstance_" + UUID.randomUUID().toString();
+        String accountName = "bs_" + BrokerUtil.generateAccountName();
         try{
-            this.createLDAPUser(accountName, ldapGroupName);
+            BrokerUtil.createLDAPUser(this.ldap, accountName, ldapGroupName);
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -108,7 +103,7 @@ public class OCDPServiceInstanceLifecycleService {
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(accountName);
+                BrokerUtil.removeLDAPUser(this.ldap, accountName);
             }catch (Exception ex){
                 ex.printStackTrace();
             }
@@ -123,7 +118,7 @@ public class OCDPServiceInstanceLifecycleService {
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(accountName);
+                BrokerUtil.removeLDAPUser(this.ldap, accountName);
             }catch (Exception ex){
                 ex.printStackTrace();
             }
@@ -165,7 +160,7 @@ public class OCDPServiceInstanceLifecycleService {
             logger.error("Ranger policy create fail.");
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(accountName);
+                BrokerUtil.removeLDAPUser(this.ldap, accountName);
             }catch (Exception ex){
                 ex.printStackTrace();
             }
@@ -229,7 +224,7 @@ public class OCDPServiceInstanceLifecycleService {
         // Delete LDAP user for service instance
         logger.info("Delete ldap user.");
         try{
-            this.removeLDAPUser(accountName);
+            BrokerUtil.removeLDAPUser(this.ldap, accountName);
         }catch (Exception e){
             logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -260,24 +255,4 @@ public class OCDPServiceInstanceLifecycleService {
         );
     }
 
-    private void createLDAPUser(String accountName, String groupName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("memberOf", "cn=" + groupName +",ou=Group,dc=asiainfo,dc=com");
-        BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("account");
-        userAttributes.put(classAttribute);
-        this.ldap.bind(ldapName, null, userAttributes);
-    }
-
-    private void removeLDAPUser(String accountName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        this.ldap.unbind(ldapName);
-    }
 }
