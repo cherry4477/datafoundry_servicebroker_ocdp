@@ -107,7 +107,7 @@ public class HiveCommonService {
             Class.forName(this.driverName);
             this.conn = DriverManager.getConnection(this.hiveJDBCUrl);
             Statement stmt = conn.createStatement();
-            stmt.execute("drop database " + dbName);
+            stmt.execute("drop database if exists " + dbName + " cascade");
         }catch (ClassNotFoundException e){
             logger.error("Hive JDBC driver not found in classpath.");
             e.printStackTrace();

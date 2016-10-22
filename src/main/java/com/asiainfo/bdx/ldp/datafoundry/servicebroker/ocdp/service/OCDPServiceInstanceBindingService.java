@@ -1,10 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.util.*;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.BasicAttribute;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.ldap.LdapName;
 
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
@@ -12,6 +8,7 @@ import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstanceBinding;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceBindingRepository;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.repository.OCDPServiceInstanceRepository;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.BrokerUtil;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.OCDPAdminServiceMapper;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.krbClient;
 
@@ -27,7 +24,6 @@ import org.springframework.cloud.servicebroker.exception.ServiceBrokerInvalidPar
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.ldap.core.LdapTemplate;
-import org.springframework.ldap.support.LdapNameBuilder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,9 +141,9 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
-        String accountName = "servicebinding_" + UUID.randomUUID().toString();
+        String accountName = "bsi_" + BrokerUtil.generateAccountName();
         try{
-            this.createLDAPUser(accountName, ldapGroupName);
+            BrokerUtil.createLDAPUser(this.ldap, accountName, ldapGroupName);
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
@@ -167,7 +163,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             e.printStackTrace();
             logger.info("Rollback LDAP user: " + accountName);
             try{
-                this.removeLDAPUser(accountName);
+                BrokerUtil.removeLDAPUser(this.ldap, accountName);
             }catch(Exception ex){
                 ex.printStackTrace();
             }
@@ -197,7 +193,7 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
             logger.error("Fail to Append user " + accountName + " to ranger policy " + policyId);
             logger.info("Rollback LDAP user: " + accountName);
             try {
-                this.removeLDAPUser(accountName);
+                BrokerUtil.removeLDAPUser(this.ldap, accountName);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -277,34 +273,13 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         // Delete LDAP user for OCDP service instance binding
         logger.info("Delete service binding ldap user.");
         try{
-            this.removeLDAPUser(accountName);
+            BrokerUtil.removeLDAPUser(this.ldap, accountName);
         }catch (Exception e){
             logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("Delete LDAP user fail due to: " + e.getLocalizedMessage());
         }
         bindingRepository.delete(serviceInstanceId, bindingId);
-    }
-
-    private void createLDAPUser(String accountName, String groupName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        Attributes userAttributes = new BasicAttributes();
-        userAttributes.put("memberOf", "cn=" + groupName + ",ou=Group,dc=asiainfo,dc=com");
-        BasicAttribute classAttribute = new BasicAttribute("objectClass");
-        classAttribute.add("account");
-        userAttributes.put(classAttribute);
-        this.ldap.bind(ldapName, null, userAttributes);
-    }
-
-    private void removeLDAPUser(String accountName){
-        String baseDN = "ou=People";
-        LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
-                .add("uid", accountName)
-                .build();
-        this.ldap.unbind(ldapName);
     }
 
 }

@@ -47,11 +47,12 @@ public class HiveAdminService implements OCDPAdminService {
         List<String> hdfsFolders = new ArrayList<String>(){
             {
                 add("/apps/hive/warehouse/" + resources.get(0) + ".db");
+                add("/user/" + accountName);
                 add("/tmp/hive");
+                add("/ats/active");
             }
         };
         String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("hive_" + policyName, hdfsFolders, accountName, groupName);
-
         return (hivePolicyId != null && hdfsPolicyId != null) ? hivePolicyId + ":" + hdfsPolicyId : null;
     }
 
