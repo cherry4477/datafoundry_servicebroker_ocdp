@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.Future;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils.BrokerUtil;
 import org.springframework.cloud.servicebroker.model.CreateServiceInstanceRequest;
@@ -54,11 +55,15 @@ public class OCDPServiceInstanceLifecycleService {
 
     private krbClient kc;
 
+    private etcdClient etcdClient;
+
+
     @Autowired
     public OCDPServiceInstanceLifecycleService(ClusterConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
         this.ldap = clusterConfig.getLdapTemplate();
         this.kc = new krbClient(clusterConfig);
+        this.etcdClient = clusterConfig.getEtcdClient();
     }
 
     @Async
@@ -75,15 +80,16 @@ public class OCDPServiceInstanceLifecycleService {
         ServiceInstance instance = new ServiceInstance(request);
 
         String ldapGroupName = this.clusterConfig.getLdapGroup();
+        String ldapGroupId = this.clusterConfig.getLdapGroupId();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         instance.setDashboardUrl(ocdp.getDashboardUrl());
 
         // Create LDAP user for service instance
         logger.info("create ldap user.");
-        String accountName = "bs_" + BrokerUtil.generateAccountName();
+        String accountName = "bsi_" + BrokerUtil.generateAccountName();
         try{
-            BrokerUtil.createLDAPUser(this.ldap, accountName, ldapGroupName);
+            BrokerUtil.createLDAPUser(this.ldap, this.etcdClient, accountName, ldapGroupName, ldapGroupId);
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();

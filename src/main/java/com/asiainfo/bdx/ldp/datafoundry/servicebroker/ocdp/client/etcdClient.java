@@ -33,7 +33,7 @@ public class etcdClient {
 
     public String readToString(String key){
         EtcdResult result = this.read(key);
-        return (result.node != null) ? result.node.value : null;
+        return (result != null && result.node != null) ? result.node.value : null;
     }
 
     public EtcdResult write(String key, String value){

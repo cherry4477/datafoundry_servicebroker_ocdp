@@ -1,5 +1,6 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -103,6 +104,21 @@ public class HDFSAdminService implements OCDPAdminService{
             this.dfs.close();
         }
         return pathName;
+    }
+
+    public void setQuota(String pathName, Long nameSpaceQuota, Long storageSpaceQuota) throws IOException {
+        try{
+            BrokerUtil.authentication(
+                    this.conf, this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
+            this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
+            this.dfs.setQuota(new Path(pathName), nameSpaceQuota, storageSpaceQuota);
+        }catch (Exception e){
+            logger.error("Set HDFS folder quota fails due to: " + e.getLocalizedMessage());
+            e.printStackTrace();
+            throw e;
+        } finally {
+            this.dfs.close();
+        }
     }
 
     @Override
