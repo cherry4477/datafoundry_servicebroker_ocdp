@@ -1,8 +1,12 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.impl;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.CatalogConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common.HiveCommonService;
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service.common.YarnCommonService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.servicebroker.model.Plan;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,52 +25,71 @@ public class HiveAdminService implements OCDPAdminService {
 
     private Logger logger = LoggerFactory.getLogger(HiveAdminService.class);
 
+    @Autowired
+    private ApplicationContext context;
+
     private ClusterConfig clusterConfig;
 
     private HiveCommonService hiveCommonService;
 
     private HDFSAdminService hdfsAdminService;
 
+    private YarnCommonService yarnCommonService;
+
     @Autowired
-    public HiveAdminService(ClusterConfig clusterConfig, HiveCommonService hiveCommonService, HDFSAdminService hdfsAdminService){
+    public HiveAdminService(ClusterConfig clusterConfig, HiveCommonService hiveCommonService, HDFSAdminService hdfsAdminService, YarnCommonService yarnCommonService){
         this.clusterConfig = clusterConfig;
         this.hiveCommonService = hiveCommonService;
         this.hdfsAdminService = hdfsAdminService;
+        this.yarnCommonService = yarnCommonService;
     }
 
     @Override
     public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
-        return hiveCommonService.createDatabase(serviceInstanceId);
+        Map<String, String> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
+        String dbName = hiveCommonService.createDatabase(serviceInstanceId);
+        // Set database storage quota
+        if(dbName != null){
+            hdfsAdminService.setQuota("/apps/hive/warehouse/" + dbName + ".db", new Long(quota.get("storageQuota")), new Long("1000"));
+        }
+        String queueName = yarnCommonService.createQueue(quota.get("yarnQueueQuota"));
+        return dbName + ":" + queueName;
     }
 
     @Override
     public String assignPermissionToResources(String policyName, List<String> resources, String accountName, String groupName){
         logger.info("Assign select/update/create/drop/alter/index/lock/all permission to hive database.");
-        String hivePolicyId = this.hiveCommonService.assignPermissionToDatabase(policyName, resources.get(0), accountName, groupName);
+        String[] resourcesList = resources.get(0).split(":");
+        String hivePolicyId = this.hiveCommonService.assignPermissionToDatabase(policyName, resourcesList[0], accountName, groupName);
         logger.info("Create corresponding hdfs policy for hive tenant");
         List<String> hdfsFolders = new ArrayList<String>(){
             {
-                add("/apps/hive/warehouse/" + resources.get(0) + ".db");
+                add("/apps/hive/warehouse/" + resourcesList[0] + ".db");
                 add("/user/" + accountName);
                 add("/tmp/hive");
                 add("/ats/active");
             }
         };
         String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("hive_" + policyName, hdfsFolders, accountName, groupName);
-        return (hivePolicyId != null && hdfsPolicyId != null) ? hivePolicyId + ":" + hdfsPolicyId : null;
+        logger.info("Create corresponding yarn policy for hive tenant");
+        String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue("hive_" + policyName, resourcesList[1], accountName, groupName);
+        return (hivePolicyId != null && hdfsPolicyId != null && yarnPolicyId != null) ? hivePolicyId + ":" + hdfsPolicyId + ":" + yarnPolicyId : null;
     }
 
     @Override
     public boolean appendUserToResourcePermission(String policyId, String groupName, String accountName){
-        String[] policyIds = policyId.split(";");
+        String[] policyIds = policyId.split(":");
         boolean userAppendToHivePolicy = this.hiveCommonService.appendUserToDatabasePermission(policyIds[0], groupName, accountName);
         boolean userAppendToHDFSPolicy = this.hdfsAdminService.appendUserToResourcePermission(policyIds[1], groupName, accountName);
-        return userAppendToHivePolicy && userAppendToHDFSPolicy;
+        boolean userAppendToYarnPolicy = this.yarnCommonService.appendUserToQueuePermission(policyIds[2], groupName, accountName);
+        return userAppendToHivePolicy && userAppendToHDFSPolicy && userAppendToYarnPolicy;
     }
 
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName)throws Exception{
-        this.hiveCommonService.deleteDatabase(serviceInstanceResuorceName);
+        String[] resources = serviceInstanceResuorceName.split(":");
+        this.hiveCommonService.deleteDatabase(resources[0]);
+        this.yarnCommonService.deleteQueue(resources[1]);
     }
 
     @Override
@@ -75,7 +98,8 @@ public class HiveAdminService implements OCDPAdminService {
         logger.info("Unassign select/update/create/drop/alter/index/lock/all permission to hive table.");
         boolean hivePolicyDeleted = this.hiveCommonService.unassignPermissionFromDatabase(policyIds[0]);
         boolean hdfsPolicyDeleted = this.hdfsAdminService.unassignPermissionFromResources(policyIds[1]);
-        return hivePolicyDeleted && hdfsPolicyDeleted;
+        boolean yarnPolicyDeleted = this.yarnCommonService.unassignPermissionFromQueue(policyIds[2]);
+        return hivePolicyDeleted && hdfsPolicyDeleted && yarnPolicyDeleted;
     }
 
     @Override
@@ -83,7 +107,8 @@ public class HiveAdminService implements OCDPAdminService {
         String[] policyIds = policyId.split(":");
         boolean userRemovedFromHivePolicy = this.hiveCommonService.removeUserFromDatabasePermission(policyIds[0], groupName, accountName);
         boolean userRemovedFromHDFSPolicy = this.hdfsAdminService.removeUserFromResourcePermission(policyIds[1], groupName, accountName);
-        return userRemovedFromHivePolicy && userRemovedFromHDFSPolicy;
+        boolean userRemovedFromYarnPolicy = this.yarnCommonService.removeUserFromQueuePermission(policyIds[2], groupName, accountName);
+        return userRemovedFromHivePolicy && userRemovedFromHDFSPolicy && userRemovedFromYarnPolicy;
     }
 
     @Override
@@ -107,6 +132,21 @@ public class HiveAdminService implements OCDPAdminService {
                 put("port", clusterConfig.getHivePort());
                 put("name", serviceInstanceResource);
                 put("rangerPolicyId", rangerPolicyId);
+            }
+        };
+    }
+
+    private Map<String, String> getQuotaFromPlan(String serviceDefinitionId, String planId){
+        CatalogConfig catalogConfig = (CatalogConfig) this.context.getBean("catalogConfig");
+        Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
+        Map<String, Object> metadata = plan.getMetadata();
+        List<String> bullets = (ArrayList)metadata.get("bullets");
+        String[] storageQuota = (bullets.get(0)).split(":");
+        String[] yarnQueueQuota = (bullets.get(1)).split(":");
+        return new HashMap<String, String>(){
+            {
+                put("storageQuota", storageQuota[1]);
+                put("yarnQueueQuota", yarnQueueQuota[1]);
             }
         };
     }

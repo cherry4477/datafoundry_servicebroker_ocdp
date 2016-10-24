@@ -2,6 +2,7 @@ package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.service;
 
 import java.util.*;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.config.ClusterConfig;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.exception.*;
 import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.model.ServiceInstance;
@@ -56,11 +57,14 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
 
     private krbClient kc;
 
+    private etcdClient etcdClient;
+
     @Autowired
     public OCDPServiceInstanceBindingService(ClusterConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
         this.ldap = clusterConfig.getLdapTemplate();
         this.kc = new krbClient(clusterConfig);
+        this.etcdClient = clusterConfig.getEtcdClient();
     }
 
     private OCDPAdminService getOCDPAdminService(String serviceDefinitionId){
@@ -137,13 +141,14 @@ public class OCDPServiceInstanceBindingService implements ServiceInstanceBinding
         String serviceInstanceResource = serviceInstanceCredentials.get("name");
 
         String ldapGroupName = this.clusterConfig.getLdapGroup();
+        String ldapGroupId = this.clusterConfig.getLdapGroupId();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         // Create LDAP user for OCDP service instance binding
         logger.info("create service binding ldap user.");
-        String accountName = "bsi_" + BrokerUtil.generateAccountName();
+        String accountName = "binding_" + BrokerUtil.generateAccountName();
         try{
-            BrokerUtil.createLDAPUser(this.ldap, accountName, ldapGroupName);
+            BrokerUtil.createLDAPUser(this.ldap, this.etcdClient, accountName, ldapGroupName, ldapGroupId);
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();

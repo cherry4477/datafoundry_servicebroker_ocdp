@@ -1,5 +1,7 @@
 package com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.utils;
 
+import com.asiainfo.bdx.ldp.datafoundry.servicebroker.ocdp.client.etcdClient;
+
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
 import org.springframework.ldap.core.LdapTemplate;
@@ -17,7 +19,7 @@ import java.io.IOException;
  */
 public class BrokerUtil {
 
-    private final static int uidNumberBase = 1100;
+    private final static String uidNumberBase = "1500";
 
     public static void authentication(Configuration conf, String userPrincipal, String keyTabFilePath){
         UserGroupInformation.setConfiguration(conf);
@@ -33,7 +35,7 @@ public class BrokerUtil {
         return uuid.substring(0,18);
     }
 
-    public static void createLDAPUser(LdapTemplate ldapTemplate, String accountName, String groupName){
+    public static void createLDAPUser(LdapTemplate ldapTemplate, etcdClient etcdClient, String accountName, String groupName, String gidNumber){
         String baseDN = "ou=People";
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
                 .add("uid", accountName)
@@ -45,8 +47,8 @@ public class BrokerUtil {
         classAttribute.add("posixAccount");
         userAttributes.put(classAttribute);
         userAttributes.put("cn", accountName);
-        userAttributes.put("uidNumber", "1110");
-        userAttributes.put("gidNumber", "1110");
+        userAttributes.put("uidNumber", getNextUidNumber(etcdClient));
+        userAttributes.put("gidNumber", gidNumber);
         userAttributes.put("homeDirectory", "/home/" + accountName);
         ldapTemplate.bind(ldapName, null, userAttributes);
     }
@@ -57,6 +59,16 @@ public class BrokerUtil {
                 .add("uid", accountName)
                 .build();
         ldapTemplate.unbind(ldapName);
+    }
+
+    private static String getNextUidNumber(etcdClient etcdClient){
+        String uidNumber = etcdClient.readToString("/servicebroker/ocdp/user/uidNumber");
+        if(uidNumber == null){
+            etcdClient.write("/servicebroker/ocdp/user/uidNumber", uidNumberBase);
+            return uidNumberBase;
+        }
+        int uidNumberBaseInt = Integer.parseInt(uidNumberBase);
+        return Integer.toString(++uidNumberBaseInt);
     }
 
 }
