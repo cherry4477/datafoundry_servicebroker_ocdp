@@ -115,6 +115,12 @@ public class HBaseAdminService implements OCDPAdminService{
                     this.conf, this.clusterConfig.getHbaseMasterPrincipal(), this.clusterConfig.getHbaseMasterUserKeytab());
             this.connection = ConnectionFactory.createConnection(conf);
             Admin admin = this.connection.getAdmin();
+            // Should drop all tables under such namespace
+            TableName[] tableNames = admin.listTableNamesByNamespace(serviceInstanceResuorceName);
+            for (TableName name : tableNames) {
+                admin.disableTable(name);
+                admin.deleteTable(name);
+            }
             admin.deleteNamespace(serviceInstanceResuorceName);
             admin.close();
             logger.info("Delete HBase namespace successful.");
