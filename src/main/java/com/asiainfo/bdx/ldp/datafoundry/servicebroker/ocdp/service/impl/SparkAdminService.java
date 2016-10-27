@@ -35,11 +35,15 @@ public class SparkAdminService implements OCDPAdminService {
 
     private HiveCommonService hiveCommonService;
 
+    private HDFSAdminService hdfsAdminService;
+
     @Autowired
-    public SparkAdminService(ClusterConfig clusterConfig, YarnCommonService yarnCommonService, HiveCommonService hiveCommonService){
+    public SparkAdminService(ClusterConfig clusterConfig, YarnCommonService yarnCommonService,
+                             HiveCommonService hiveCommonService, HDFSAdminService hdfsAdminService){
         this.clusterConfig = clusterConfig;
         this.yarnCommonService = yarnCommonService;
         this.hiveCommonService = hiveCommonService;
+        this.hdfsAdminService = hdfsAdminService;
     }
 
     @Override
@@ -53,12 +57,23 @@ public class SparkAdminService implements OCDPAdminService {
 
     @Override
     public String assignPermissionToResources(String policyName, final List<String> resources, String accountName, String groupName) {
-        logger.info("Assign permissions for yarn queue and hive database.");
         String[] resourcesList = resources.get(0).split(":");
+        logger.info("Assign permissions for yarn queue.");
         String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resourcesList[0], accountName, groupName);
-        String hiveId = this.hiveCommonService.assignPermissionToDatabase(policyName, resourcesList[1], accountName, groupName);
+        logger.info("Create corresponding hdfs policy for spark tenant");
+        List<String> hdfsFolders = new ArrayList<String>(){
+            {
+                add("/apps/hive/warehouse/" + resourcesList[0] + ".db");
+                add("/user/" + accountName);
+                add("/tmp/hive");
+                add("/ats/active");
+            }
+        };
+        String hdfsPolicyId = this.hdfsAdminService.assignPermissionToResources("spark_" + policyName, hdfsFolders, accountName, groupName);
+        logger.info("Create corresponding hive policy for spark tenant");
+        String hivePolicyId = this.hiveCommonService.assignPermissionToDatabase("spark_" + policyName, resourcesList[1], accountName, groupName);
         // return yarn policy id and hive policy id, because spark need both resources
-        return (yarnPolicyId != null && hiveId != null) ? yarnPolicyId + ":" + hiveId : null;
+        return (yarnPolicyId != null && hivePolicyId != null && hdfsPolicyId != null) ? yarnPolicyId + ":" + hivePolicyId + ":" + hdfsPolicyId : null;
     }
 
     @Override
@@ -66,7 +81,8 @@ public class SparkAdminService implements OCDPAdminService {
         String[] policyIds = policyId.split(":");
         boolean userAppendToYarnPolicy = this.yarnCommonService.appendUserToQueuePermission(policyIds[0], groupName, accountName);
         boolean userAppendToHivePolicy = this.hiveCommonService.appendUserToDatabasePermission(policyIds[1], groupName, accountName);
-        return userAppendToYarnPolicy && userAppendToHivePolicy;
+        boolean userAppendToHDFSPolicy = this.hdfsAdminService.appendUserToResourcePermission(policyIds[2], groupName, accountName);
+        return userAppendToYarnPolicy && userAppendToHivePolicy && userAppendToHDFSPolicy;
     }
 
     @Override
@@ -78,11 +94,14 @@ public class SparkAdminService implements OCDPAdminService {
 
     @Override
     public boolean unassignPermissionFromResources(String policyId) {
-        logger.info("Unassign permission to yarn queue and hive database.");
         String[] policyIds = policyId.split(":");
+        logger.info("Unassign submit/admin permission to yarn queue.");
         boolean yarnPolicyDeleted = this.yarnCommonService.unassignPermissionFromQueue(policyIds[0]);
+        logger.info("Unassign select/update/create/drop/alter/index/lock/all permission to hive database.");
         boolean hivePolicyDeleted = this.hiveCommonService.unassignPermissionFromDatabase(policyIds[1]);
-        return yarnPolicyDeleted && hivePolicyDeleted;
+        logger.info("Unassign read/write/execute permission to hdfs folder.");
+        boolean hdfsPolicyDeleted = this.hdfsAdminService.unassignPermissionFromResources(policyIds[2]);
+        return yarnPolicyDeleted && hivePolicyDeleted && hdfsPolicyDeleted;
     }
 
     @Override
@@ -90,7 +109,8 @@ public class SparkAdminService implements OCDPAdminService {
         String[] policyIds = policyId.split(":");
         boolean userRemovedFromYarnPolicy = this.yarnCommonService.removeUserFromQueuePermission(policyIds[0], groupName, accountName);
         boolean userRemovedFromHivePolicy = this.hiveCommonService.removeUserFromDatabasePermission(policyIds[1], groupName, accountName);
-        return userRemovedFromYarnPolicy && userRemovedFromHivePolicy;
+        boolean userRemovedFromHDFSPolicy = this.hdfsAdminService.removeUserFromResourcePermission(policyIds[2], groupName, accountName);
+        return userRemovedFromYarnPolicy && userRemovedFromHivePolicy && userRemovedFromHDFSPolicy;
     }
 
     @Override
