@@ -122,17 +122,19 @@ public class HiveAdminService implements OCDPAdminService {
     @Override
     public Map<String, Object> generateCredentialsInfo(String accountName, String accountPwd, String accountKeytab,
                                                        String serviceInstanceResource, String rangerPolicyId){
+        // Get hive database name from service instance resources
+        String[] resources = serviceInstanceResource.split(":");
         return new HashMap<String, Object>(){
             {
                 put("uri", "jdbc:hive2://" + clusterConfig.getHiveHost() + ":" +
-                                clusterConfig.getHivePort() + "/" + serviceInstanceResource +
+                                clusterConfig.getHivePort() + "/" + resources[0] +
                                 ";principal=" + accountName );
                 put("username", accountName);
                 put("password", accountPwd);
                 put("keytab", accountKeytab);
                 put("host", clusterConfig.getHiveHost());
                 put("port", clusterConfig.getHivePort());
-                put("name", serviceInstanceResource);
+                put("name", resources[0]);
                 put("rangerPolicyId", rangerPolicyId);
             }
         };
