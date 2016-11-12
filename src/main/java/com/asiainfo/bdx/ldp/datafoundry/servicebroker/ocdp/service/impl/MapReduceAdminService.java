@@ -43,9 +43,12 @@ public class MapReduceAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception {
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId, String accountName) throws Exception {
         Map<String, String> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
-        return this.yarnCommonService.createQueue(quota.get("yarnQueueQuota"));
+        String dirName = "/user/" + accountName;
+        this.hdfsAdminService.createHDFSDir(dirName, new Long(quota.get("nameSpaceQuota")), new Long(quota.get("storageSpaceQuota")) * 1000000000);
+        String queueName = this.yarnCommonService.createQueue(quota.get("yarnQueueQuota"));
+        return queueName + ":" + dirName;
     }
 
     @Override
@@ -72,7 +75,9 @@ public class MapReduceAdminService implements OCDPAdminService{
 
     @Override
     public void deprovisionResources(String serviceInstanceResuorceName)throws Exception{
-        this.yarnCommonService.deleteQueue(serviceInstanceResuorceName);
+        String[] resources = serviceInstanceResuorceName.split(":");
+        this.yarnCommonService.deleteQueue(resources[0]);
+        this.hdfsAdminService.deprovisionResources(resources[1]);
     }
 
     @Override
@@ -121,9 +126,13 @@ public class MapReduceAdminService implements OCDPAdminService{
         Map<String, Object> metadata = plan.getMetadata();
         List<String> bullets = (ArrayList)metadata.get("bullets");
         String[] yarnQueueQuota = (bullets.get(0)).split(":");
+        String[] nameSpaceQuota = (bullets.get(1)).split(":");
+        String[] storageSpaceQuota = (bullets.get(2)).split(":");
         return new HashMap<String, String>(){
             {
                 put("yarnQueueQuota", yarnQueueQuota[1]);
+                put("nameSpaceQuota", nameSpaceQuota[1]);
+                put("storageSpaceQuota", storageSpaceQuota[1]);
             }
         };
     }

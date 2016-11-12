@@ -47,12 +47,19 @@ public class SparkAdminService implements OCDPAdminService {
     }
 
     @Override
-    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception {
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
+                                     String bindingId, String accountName) throws Exception {
         Map<String, String> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
         String queueName = yarnCommonService.createQueue(quota.get("yarnQueueQuota"));
         String dbName = hiveCommonService.createDatabase(serviceInstanceId);
+        // Set database storage quota
+        if(dbName != null){
+            hdfsAdminService.setQuota("/apps/hive/warehouse/" + dbName + ".db", new Long("1000"), new Long(quota.get("hiveStorageQuota")) * 1000000000);
+        }
+        String dirName = "/user/" + accountName;
+        this.hdfsAdminService.createHDFSDir(dirName, new Long(quota.get("nameSpaceQuota")), new Long(quota.get("storageSpaceQuota")) * 1000000000);
         // return yarn queue name and hive database, because spark need both resources
-        return queueName + ":" + dbName;
+        return queueName + ":" + dbName + ":" + dirName;
     }
 
     @Override
@@ -90,6 +97,7 @@ public class SparkAdminService implements OCDPAdminService {
         String[] resources = serviceInstanceResuorceName.split(":");
         this.yarnCommonService.deleteQueue(resources[0]);
         this.hiveCommonService.deleteDatabase(resources[1]);
+        this.hdfsAdminService.deprovisionResources(resources[2]);
     }
 
     @Override
@@ -141,9 +149,15 @@ public class SparkAdminService implements OCDPAdminService {
         Map<String, Object> metadata = plan.getMetadata();
         List<String> bullets = (ArrayList)metadata.get("bullets");
         String[] yarnQueueQuota = (bullets.get(0)).split(":");
+        String[] hiveStorageQuota = (bullets.get(1)).split(":");
+        String[] nameSpaceQuota = (bullets.get(2)).split(":");
+        String[] storageSpaceQuota = (bullets.get(3)).split(":");
         return new HashMap<String, String>(){
             {
                 put("yarnQueueQuota", yarnQueueQuota[1]);
+                put("hiveStorageQuota", hiveStorageQuota[1]);
+                put("nameSpaceQuota", nameSpaceQuota[1]);
+                put("storageSpaceQuota", storageSpaceQuota[1]);
             }
         };
     }

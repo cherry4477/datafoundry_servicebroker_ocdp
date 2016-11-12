@@ -79,31 +79,32 @@ public class HDFSAdminService implements OCDPAdminService{
     }
 
     @Override
-    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
-        String pathName;
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
+                                     String bindingId, String accountName) throws Exception{
+        String pathName = "/servicebroker/" + serviceInstanceId;
+        Map<String, Long> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
+        this.createHDFSDir(pathName, quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
+        return pathName;
+    }
+
+    public void createHDFSDir(String pathName, Long nameSpaceQuota, Long storageSpaceQuota) throws IOException{
         try{
             BrokerUtil.authentication(
                     this.conf, this.clusterConfig.getHdfsSuperUser(), this.clusterConfig.getHdfsUserKeytab());
             this.dfs.initialize(URI.create(this.hdfsRPCUrl), this.conf);
-            if(bindingId == null){
-                pathName = "/servicebroker/" + serviceInstanceId;
+            if (! this.dfs.exists(new Path(pathName))){
                 this.dfs.mkdirs(new Path(pathName), FS_PERMISSION);
-                // Only hdfs folder for service instance need set name/storage space quota
-                Map<String, Long> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
-                this.dfs.setQuota(new Path(pathName), quota.get("nameSpaceQuota"), quota.get("storageSpaceQuota"));
-            }else {
-                pathName = "/servicebroker/" + serviceInstanceId + "/" + bindingId;
-                this.dfs.mkdirs(new Path(pathName), FS_USER_PERMISSION);
+                this.dfs.setQuota(new Path(pathName), nameSpaceQuota, storageSpaceQuota);
+                logger.info("Create hdfs folder successful.");
             }
-            logger.info("Create hdfs folder successful.");
+            logger.info("HDFS folder exists, not need to create again.");
         }catch (Exception e){
-            logger.error("HDFS folder create fail due to: " + e.getLocalizedMessage());
+            logger.error("Set HDFS folder quota fails due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw e;
         } finally {
             this.dfs.close();
         }
-        return pathName;
     }
 
     public void setQuota(String pathName, Long nameSpaceQuota, Long storageSpaceQuota) throws IOException {
