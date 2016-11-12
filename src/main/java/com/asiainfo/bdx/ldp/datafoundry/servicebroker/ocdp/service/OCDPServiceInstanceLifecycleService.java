@@ -118,7 +118,7 @@ public class OCDPServiceInstanceLifecycleService {
         // Create Hadoop resource like hdfs folder, hbase table ...
         String serviceInstanceResource;
         try{
-            serviceInstanceResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, null);
+            serviceInstanceResource = ocdp.provisionResources(serviceDefinitionId, planId, serviceInstanceId, null, accountName);
         }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();

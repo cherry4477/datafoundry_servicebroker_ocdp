@@ -37,7 +37,8 @@ public class HiveAdminService implements OCDPAdminService {
     private YarnCommonService yarnCommonService;
 
     @Autowired
-    public HiveAdminService(ClusterConfig clusterConfig, HiveCommonService hiveCommonService, HDFSAdminService hdfsAdminService, YarnCommonService yarnCommonService){
+    public HiveAdminService(ClusterConfig clusterConfig, HiveCommonService hiveCommonService, HDFSAdminService hdfsAdminService,
+                            YarnCommonService yarnCommonService){
         this.clusterConfig = clusterConfig;
         this.hiveCommonService = hiveCommonService;
         this.hdfsAdminService = hdfsAdminService;
@@ -45,12 +46,13 @@ public class HiveAdminService implements OCDPAdminService {
     }
 
     @Override
-    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId) throws Exception{
+    public String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId, String bindingId,
+                                     String accountName) throws Exception{
         Map<String, String> quota = this.getQuotaFromPlan(serviceDefinitionId, planId);
         String dbName = hiveCommonService.createDatabase(serviceInstanceId);
         // Set database storage quota
         if(dbName != null){
-            hdfsAdminService.setQuota("/apps/hive/warehouse/" + dbName + ".db", new Long(quota.get("storageQuota")), new Long("1000"));
+            hdfsAdminService.setQuota("/apps/hive/warehouse/" + dbName + ".db", new Long("1000"), new Long(quota.get("hiveStorageQuota")) * 1000000000);
         }
         String queueName = yarnCommonService.createQueue(quota.get("yarnQueueQuota"));
         return dbName + ":" + queueName;
@@ -145,11 +147,11 @@ public class HiveAdminService implements OCDPAdminService {
         Plan plan = catalogConfig.getServicePlan(serviceDefinitionId, planId);
         Map<String, Object> metadata = plan.getMetadata();
         List<String> bullets = (ArrayList)metadata.get("bullets");
-        String[] storageQuota = (bullets.get(0)).split(":");
+        String[] hiveStorageQuota = (bullets.get(0)).split(":");
         String[] yarnQueueQuota = (bullets.get(1)).split(":");
         return new HashMap<String, String>(){
             {
-                put("storageQuota", storageQuota[1]);
+                put("hiveStorageQuota", hiveStorageQuota[1]);
                 put("yarnQueueQuota", yarnQueueQuota[1]);
             }
         };

@@ -12,7 +12,7 @@ import java.util.Map;
 public interface OCDPAdminService {
 
 	String provisionResources(String serviceDefinitionId, String planId, String serviceInstanceId,
-                              String bindingId) throws Exception;
+                              String bindingId, String accountName) throws Exception;
 
     String assignPermissionToResources(String policyName, List<String> resources, String accountName, String groupName);
 
