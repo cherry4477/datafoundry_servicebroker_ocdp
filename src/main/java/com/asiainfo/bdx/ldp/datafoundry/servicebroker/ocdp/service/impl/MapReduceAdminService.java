@@ -53,8 +53,9 @@ public class MapReduceAdminService implements OCDPAdminService{
 
     @Override
     public String assignPermissionToResources(String policyName, final List<String> resources, String accountName, String groupName) {
+        String[] resourcesList = resources.get(0).split(":");
         logger.info("Assign submit-app/admin-queue permission to yarn queue.");
-        String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resources.get(0), accountName, groupName);
+        String yarnPolicyId = this.yarnCommonService.assignPermissionToQueue(policyName, resourcesList[0], accountName, groupName);
         logger.info("Create corresponding hdfs policy for mapreduce tenant");
         List<String> hdfsFolders = new ArrayList<String>(){
             {
