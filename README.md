@@ -23,6 +23,7 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export LDAP_PASSWORD=<password>
      export LDAP_BASE=<base dn>
      export LDAP_GROUP=<LDAP group name>
+     export LDAP_GROUP_ID=<LDP group ID>
 
      export KRB_KDC_HOST=<KDC hostname>
      export KRB_USER_PRINCIPAL=<admin user principal>
@@ -41,8 +42,12 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export HDFS_RPC_PORT=<HDFS RPC port>
      export HDFS_SUPER_USER=<HDFS super user principal>
      export HDFS_USER_KEYTAB=<HDFS super user keytab path>
+     export HDFS_RPC_PORT=<HDFS RPC Port>
+     export HDFS_PORT=<Web HDFS Port>
 
      export HBASE_MASTER_URL=<HBase master UI>
+     export HBASE_MASTER=<HBase master>
+     export HBASE_REST_PORT=<HBase rest port>
      export HBASE_MASTER_PRINCIPAL=<HBase super user principal>
      export HBASE_MASTER_USER_KEYTAB=<HBase super user keytab path>
      export HBASE_ZOOKEEPER_QUORUM=<Zookeeper hosts list>
@@ -53,6 +58,17 @@ Configure connectivity properties (e.g. LDAP, kerberos, Hadoop ...) in system en
      export HIVE_PORT=<HiveServer2 port>
      export HIVE_SUPER_USER=<Hive admin user>
      export HIVE_SUPER_USER_KEYTAB=<Hive admin user keytab>
+
+     export AMBARI_HOST=<Amabari server>
+     export AMBARI_ADMIN_USER=<Ambari admin username>
+     export AMBARI_ADMIN_PWD=<Ambari admin password>
+
+     export YARN_RESOURCEMANAGER_HOST=<Yarn Resource Manager host>
+     export YARN_RESOURCEMANAGER_PORT=<Yarn Resource Manager Port>
+     export YARN_RESOURCEMANAGER_URL=<Yarn Resource Manager URL>
+     export YARN_SUPER_USER=<Yarn super user>
+     export YARN_SUPER_USER_KEYTAB=<Yarn super user keytab>
+
 
      export MR_HISTORY_URL=<MapReduce History server URL>
 
