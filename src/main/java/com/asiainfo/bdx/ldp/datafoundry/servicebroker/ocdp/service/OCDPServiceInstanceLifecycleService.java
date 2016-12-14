@@ -143,7 +143,7 @@ public class OCDPServiceInstanceLifecycleService {
         String policyId = null;
         int i = 0;
         logger.info("Try to create ranger policy...");
-        while(i++ <= 20){
+        while(i++ <= 40){
             policyId = ocdp.assignPermissionToResources(policyName, new ArrayList<String>(){{add(serviceInstanceResource);}}, accountName, ldapGroupName);
             // TODO Need get a way to force sync up ldap users with ranger service, for temp solution will wait 60 sec
             if (policyId == null){
