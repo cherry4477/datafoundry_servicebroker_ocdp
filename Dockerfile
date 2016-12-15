@@ -1,4 +1,4 @@
-FROM centos
+FROM centos:7.2
 
 EXPOSE 8080
 
