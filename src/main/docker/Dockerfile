@@ -1,4 +1,4 @@
-FROM centos:7.2
+FROM docker.io/kshenk/centos-7.2
 
 EXPOSE 8080
 
