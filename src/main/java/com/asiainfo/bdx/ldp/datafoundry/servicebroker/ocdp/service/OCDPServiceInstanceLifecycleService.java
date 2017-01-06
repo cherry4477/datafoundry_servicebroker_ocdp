@@ -188,9 +188,15 @@ public class OCDPServiceInstanceLifecycleService {
         instance.setCredential(credentials);
         repository.save(instance);
 
+        /**
         CreateServiceInstanceResponse response = new CreateServiceInstanceResponse()
                 .withDashboardUrl(instance.getDashboardUrl())
                 .withAsync(false);
+         Do not return OCDP components dashboard to DF, due to current Hadoop component dashboard not support multi-tenant function.
+         For details, please refer to https://github.com/asiainfoLDP/datafoundry_servicebroker_ocdp/issues/2
+        **/
+
+        CreateServiceInstanceResponse response = new CreateServiceInstanceResponse().withAsync(false);
         return response;
 	}
 
