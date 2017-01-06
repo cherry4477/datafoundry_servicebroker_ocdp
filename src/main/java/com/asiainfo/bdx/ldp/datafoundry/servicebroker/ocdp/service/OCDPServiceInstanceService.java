@@ -57,9 +57,14 @@ public class OCDPServiceInstanceService implements ServiceInstanceService {
         if(request.isAsyncAccepted()){
             Future<CreateServiceInstanceResponse> responseFuture = service.doCreateServiceInstanceAsync(request);
             this.instanceProvisionStateMap.put(request.getServiceInstanceId(), responseFuture);
+            /**
             response = new CreateServiceInstanceResponse()
                     .withDashboardUrl(service.getOCDPServiceDashboard(request.getServiceDefinitionId()))
                     .withAsync(true);
+             Do not return OCDP components dashboard to DF, due to current Hadoop component dashboard not support multi-tenant function.
+             For details, please refer to https://github.com/asiainfoLDP/datafoundry_servicebroker_ocdp/issues/2
+             **/
+            response = new CreateServiceInstanceResponse().withAsync(true);
         } else {
             response = service.doCreateServiceInstance(request);
         }
