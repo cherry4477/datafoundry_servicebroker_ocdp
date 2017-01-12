@@ -77,44 +77,58 @@ public class OCDPServiceInstanceLifecycleService {
         String serviceDefinitionId = request.getServiceDefinitionId();
         String serviceInstanceId = request.getServiceInstanceId();
         String planId = request.getPlanId();
+        Map<String, Object> params = request.getParameters();
         ServiceInstance instance = new ServiceInstance(request);
 
+        String accountName = (String)params.get("username");
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String ldapGroupId = this.clusterConfig.getLdapGroupId();
         String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
         instance.setDashboardUrl(ocdp.getDashboardUrl());
 
-        // Create LDAP user for service instance
-        logger.info("create ldap user.");
-        String accountName = "bsi_" + BrokerUtil.generateAccountName();
+        //Create LDAP user and related kerberos principal/keytab if it not exists
+        boolean newCreatedLDAPUser = false;
         try{
-            BrokerUtil.createLDAPUser(this.ldap, this.etcdClient, accountName, ldapGroupName, ldapGroupId);
+            if(! BrokerUtil.isLDAPUserExist(this.ldap, accountName)){
+                logger.info("create new ldap user.");
+                newCreatedLDAPUser = true;
+                BrokerUtil.createLDAPUser(this.ldap, this.etcdClient, accountName, ldapGroupName, ldapGroupId);
+            }
         }catch (Exception e){
             logger.error("LDAP user create fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
             throw new OCDPServiceException("LDAP user create fail due to: " + e.getLocalizedMessage());
         }
 
-        //Create Kerberos principal for new LDAP user
-        logger.info("create kerberos principal.");
+        //Create new kerberos principal/keytab for new LDAP user
         String pn = accountName + "@" + krbRealm;
-        String pwd = UUID.randomUUID().toString();
-        String keyTabString;
-        try{
-            this.kc.createPrincipal(pn, pwd);
-            keyTabString = this.kc.createKeyTabString(pn, pwd, null);
-        }catch(KerberosOperationException e){
-            logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            logger.info("Rollback LDAP user: " + accountName);
+        String pwd;
+        String keyTabString = "";
+        if (newCreatedLDAPUser){
+            logger.info("create new kerberos principal.");
+            // Generate krb password and store it to etcd
+            pwd = UUID.randomUUID().toString();
+            etcdClient.write("/servicebroker/ocdp/user/krb/" + pn, pwd);
             try{
-                BrokerUtil.removeLDAPUser(this.ldap, accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
+                this.kc.createPrincipal(pn, pwd);
+                keyTabString = this.kc.createKeyTabString(pn, pwd, null);
+            }catch(KerberosOperationException e){
+                logger.error("Kerberos principal create fail due to: " + e.getLocalizedMessage());
+                e.printStackTrace();
+                logger.info("Rollback LDAP user: " + accountName);
+                try{
+                    BrokerUtil.removeLDAPUser(this.ldap, accountName);
+                }catch (Exception ex){
+                    ex.printStackTrace();
+                }
+                throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
             }
-            throw new OCDPServiceException("Kerberos principal create fail due to: " + e.getLocalizedMessage());
+        } else {
+            // Get krb principal's password from etcd
+            pwd = etcdClient.readToString("/servicebroker/ocdp/user/krb/" + pn);
         }
+
         // Create Hadoop resource like hdfs folder, hbase table ...
         String serviceInstanceResource;
         try{
@@ -122,17 +136,8 @@ public class OCDPServiceInstanceLifecycleService {
         }catch (Exception e){
             logger.error("OCDP resource provision fail due to: " + e.getLocalizedMessage());
             e.printStackTrace();
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                BrokerUtil.removeLDAPUser(this.ldap, accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback kerberos principal: " + accountName);
-            try{
-                this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
-                ex.printStackTrace();
+            if(newCreatedLDAPUser){
+                rollbackLDAPAndKrb(accountName, pn);
             }
             throw new OCDPServiceException("OCDP ressource provision fails due to: " + e.getLocalizedMessage());
         }
@@ -164,17 +169,8 @@ public class OCDPServiceInstanceLifecycleService {
         }
         if (policyId == null){
             logger.error("Ranger policy create fail.");
-            logger.info("Rollback LDAP user: " + accountName);
-            try{
-                BrokerUtil.removeLDAPUser(this.ldap, accountName);
-            }catch (Exception ex){
-                ex.printStackTrace();
-            }
-            logger.info("Rollback kerberos principal: " + accountName);
-            try{
-                this.kc.removePrincipal(pn);
-            }catch(KerberosOperationException ex){
-                ex.printStackTrace();
+            if(newCreatedLDAPUser){
+                rollbackLDAPAndKrb(accountName, pn);
             }
             logger.info("Rollback OCDP resource: " + serviceInstanceResource);
             try{
@@ -212,11 +208,10 @@ public class OCDPServiceInstanceLifecycleService {
         String serviceInstanceId = request.getServiceInstanceId();
 
         Map<String, String> Credential = instance.getServiceInstanceCredentials();
-        String accountName = Credential.get("username");
         String serviceInstanceResource = Credential.get("name");
         String policyId = Credential.get("rangerPolicyId");
-        String krbRealm = this.clusterConfig.getKrbRealm();
         OCDPAdminService ocdp = getOCDPAdminService(serviceDefinitionId);
+
         // Unset permission by Apache Ranger
         boolean policyDeleteResult = ocdp.unassignPermissionFromResources(policyId);
         if(!policyDeleteResult)
@@ -224,24 +219,7 @@ public class OCDPServiceInstanceLifecycleService {
             logger.error("Ranger policy delete fail.");
             throw new OCDPServiceException("Ranger policy delete fail.");
         }
-        // Delete Kerberos principal for new LDAP user
-        logger.info("Delete kerberos principal.");
-        try{
-            this.kc.removePrincipal(accountName + "@" + krbRealm);
-        }catch(KerberosOperationException e){
-            logger.error("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("Delete kerbreos principal fail due to: " + e.getLocalizedMessage());
-        }
-        // Delete LDAP user for service instance
-        logger.info("Delete ldap user.");
-        try{
-            BrokerUtil.removeLDAPUser(this.ldap, accountName);
-        }catch (Exception e){
-            logger.error("Delete LDAP user fail due to: " + e.getLocalizedMessage());
-            e.printStackTrace();
-            throw new OCDPServiceException("Delete LDAP user fail due to: " + e.getLocalizedMessage());
-        }
+
         // Delete Hadoop resource like hdfs folder, hbase table ...
         try{
             ocdp.deprovisionResources(serviceInstanceResource);
@@ -265,6 +243,23 @@ public class OCDPServiceInstanceLifecycleService {
         return  (OCDPAdminService) this.context.getBean(
                 OCDPAdminServiceMapper.getOCDPAdminService(serviceDefinitionId)
         );
+    }
+
+    private void rollbackLDAPAndKrb(String accountName, String pn){
+        logger.info("Rollback LDAP user: " + accountName);
+        try{
+            BrokerUtil.removeLDAPUser(this.ldap, accountName);
+        }catch (Exception ex){
+            logger.error("Delete LDAP user fail due to: " + ex.getLocalizedMessage());
+            ex.printStackTrace();
+        }
+        logger.info("Rollback kerberos principal: " + accountName);
+        try{
+            this.kc.removePrincipal(pn);
+        }catch(KerberosOperationException ex){
+            logger.error("Delete kerbreos principal fail due to: " + ex.getLocalizedMessage());
+            ex.printStackTrace();
+        }
     }
 
 }
