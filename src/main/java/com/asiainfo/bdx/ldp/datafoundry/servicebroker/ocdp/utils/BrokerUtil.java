@@ -6,11 +6,14 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.conf.Configuration;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.support.LdapNameBuilder;
+import org.springframework.ldap.core.AttributesMapper;
 
 import javax.naming.directory.Attributes;
 import javax.naming.directory.BasicAttribute;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.ldap.LdapName;
+import javax.naming.NamingException;
+import java.util.List;
 import java.util.UUID;
 import java.io.IOException;
 
@@ -58,7 +61,20 @@ public class BrokerUtil {
         LdapName ldapName = LdapNameBuilder.newInstance(baseDN)
                 .add("uid", accountName)
                 .build();
+
         ldapTemplate.unbind(ldapName);
+    }
+
+    public static boolean isLDAPUserExist(LdapTemplate ldapTemplate, String accountName){
+        List list = ldapTemplate.search(
+                "", "(uid=" + accountName + ")",
+                new AttributesMapper() {
+                    public Object mapFromAttributes(Attributes attrs)
+                            throws NamingException {
+                        return attrs.get("uid").get();
+                    }
+                });
+        return (list.size() != 0);
     }
 
     private static String getNextUidNumber(etcdClient etcdClient){
@@ -67,8 +83,10 @@ public class BrokerUtil {
             etcdClient.write("/servicebroker/ocdp/user/uidNumber", uidNumberBase);
             return uidNumberBase;
         }
-        int uidNumberBaseInt = Integer.parseInt(uidNumberBase);
-        return Integer.toString(++uidNumberBaseInt);
+        int uidNumberInt = Integer.parseInt(uidNumber);
+        String nextUidNumber = Integer.toString(++uidNumberInt);
+        etcdClient.write("/servicebroker/ocdp/user/uidNumber", nextUidNumber);
+        return nextUidNumber;
     }
 
 }

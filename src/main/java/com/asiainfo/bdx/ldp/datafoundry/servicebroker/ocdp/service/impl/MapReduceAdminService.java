@@ -69,8 +69,8 @@ public class MapReduceAdminService implements OCDPAdminService{
     @Override
     public boolean appendUserToResourcePermission(String policyId, String groupName, String accountName) {
         String[] policyIds = policyId.split(":");
-        boolean userAppendToHDFSPolicy = this.hdfsAdminService.appendUserToResourcePermission(policyIds[0], groupName, accountName);
-        boolean userAppendToYarnPolicy = this.yarnCommonService.appendUserToQueuePermission(policyIds[1], groupName, accountName);
+        boolean userAppendToYarnPolicy = this.yarnCommonService.appendUserToQueuePermission(policyIds[0], groupName, accountName);
+        boolean userAppendToHDFSPolicy = this.hdfsAdminService.appendUserToResourcePermission(policyIds[1], groupName, accountName);
         return userAppendToYarnPolicy && userAppendToHDFSPolicy;
     }
 
@@ -84,18 +84,18 @@ public class MapReduceAdminService implements OCDPAdminService{
     @Override
     public boolean unassignPermissionFromResources(String policyId) {
         String[] policyIds = policyId.split(":");
-        logger.info("Unassign read/write/execute permission to hdfs folder.");
-        boolean hdfsPolicyDeleted = this.hdfsAdminService.unassignPermissionFromResources(policyIds[0]);
         logger.info("Unassign submit/admin permission to yarn queue.");
-        boolean yarnPolicyDeleted = this.yarnCommonService.unassignPermissionFromQueue(policyIds[1]);
+        boolean yarnPolicyDeleted = this.yarnCommonService.unassignPermissionFromQueue(policyIds[0]);
+        logger.info("Unassign read/write/execute permission to hdfs folder.");
+        boolean hdfsPolicyDeleted = this.hdfsAdminService.unassignPermissionFromResources(policyIds[1]);
         return yarnPolicyDeleted && hdfsPolicyDeleted;
     }
 
     @Override
     public boolean removeUserFromResourcePermission(String policyId, String groupName, String accountName) {
         String[] policyIds = policyId.split(":");
-        boolean userRemovedFromHDFSPolicy = this.hdfsAdminService.removeUserFromResourcePermission(policyIds[0], groupName, accountName);
-        boolean userRemovedFromYarnPolicy = this.yarnCommonService.removeUserFromQueuePermission(policyIds[1], groupName, accountName);
+        boolean userRemovedFromYarnPolicy = this.yarnCommonService.removeUserFromQueuePermission(policyIds[0], groupName, accountName);
+        boolean userRemovedFromHDFSPolicy = this.hdfsAdminService.removeUserFromResourcePermission(policyIds[1], groupName, accountName);
         return userRemovedFromYarnPolicy && userRemovedFromHDFSPolicy;
     }
 
