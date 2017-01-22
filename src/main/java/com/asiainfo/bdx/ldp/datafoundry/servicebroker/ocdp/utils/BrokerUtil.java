@@ -77,7 +77,7 @@ public class BrokerUtil {
         return (list.size() != 0);
     }
 
-    private static String getNextUidNumber(etcdClient etcdClient){
+    private static synchronized String getNextUidNumber(etcdClient etcdClient){
         String uidNumber = etcdClient.readToString("/servicebroker/ocdp/user/uidNumber");
         if(uidNumber == null){
             etcdClient.write("/servicebroker/ocdp/user/uidNumber", uidNumberBase);
