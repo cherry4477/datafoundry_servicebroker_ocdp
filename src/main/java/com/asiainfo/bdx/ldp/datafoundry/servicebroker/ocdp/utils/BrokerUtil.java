@@ -61,14 +61,16 @@ public class BrokerUtil {
         ldapTemplate.unbind(ldapName);
     }
 
-    private static String getNextUidNumber(etcdClient etcdClient){
+    private static synchronized String getNextUidNumber(etcdClient etcdClient){
         String uidNumber = etcdClient.readToString("/servicebroker/ocdp/user/uidNumber");
         if(uidNumber == null){
             etcdClient.write("/servicebroker/ocdp/user/uidNumber", uidNumberBase);
             return uidNumberBase;
         }
-        int uidNumberBaseInt = Integer.parseInt(uidNumberBase);
-        return Integer.toString(++uidNumberBaseInt);
+        int uidNumberInt = Integer.parseInt(uidNumber);
+        String nextUidNumber = Integer.toString(++uidNumberInt);
+        etcdClient.write("/servicebroker/ocdp/user/uidNumber", nextUidNumber);
+        return nextUidNumber;
     }
 
 }
