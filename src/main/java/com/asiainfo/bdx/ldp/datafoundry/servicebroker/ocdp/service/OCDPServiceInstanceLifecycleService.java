@@ -77,10 +77,9 @@ public class OCDPServiceInstanceLifecycleService {
         String serviceDefinitionId = request.getServiceDefinitionId();
         String serviceInstanceId = request.getServiceInstanceId();
         String planId = request.getPlanId();
-        Map<String, Object> params = request.getParameters();
         ServiceInstance instance = new ServiceInstance(request);
 
-        String accountName = (String)params.get("username");
+        String accountName = request.getSpaceGuid();
         String ldapGroupName = this.clusterConfig.getLdapGroup();
         String ldapGroupId = this.clusterConfig.getLdapGroupId();
         String krbRealm = this.clusterConfig.getKrbRealm();
